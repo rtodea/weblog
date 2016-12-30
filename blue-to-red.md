@@ -38,4 +38,39 @@ Output:
 
 ## Breakdown
 
-_TODO_
+### Blue app
+It has a CSV export feature that can provide the following columns:
+
+* Project
+* Issue Type
+* Key
+* Summary
+* Priority
+* "Billing - Project"
+* Date Started
+* Username
+* Display Name
+* Time Spent (h)
+* Work Description
+
+### Red app
+
+_Add new timesheet_ form:
+
+* Name
+* Start date
+
+_Edit timesheet_ form contains a _Time Entries_ table:
+
+* Date
+* Task code
+* Blue number
+* Task Description
+* Hours
+
+## Implementation Steps
+
+1. Manually export from Blue the CSV report into `exportData.csv`
+1. Split `exportData.csv` into per billing project entries
+1. For each billing project create a CSV report with the correct columns
+1. Import the CSV into Red
