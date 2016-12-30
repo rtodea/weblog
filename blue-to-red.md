@@ -22,7 +22,7 @@ It is a tedious process and very error prone.
 You would not want to forget some work hours, use wrong task codes, etc.
 
 Leaving aside a similar analysis to [_Is it worth the time_](https://xkcd.com/1205/)
-we would like to automate the transition process process.
+we would like to automate the transition process.
 
 ## Requirements
 
