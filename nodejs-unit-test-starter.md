@@ -10,6 +10,6 @@ It contains:
 1. [Chai](chaijs.com)
 1. [SinonJS](sinonjs.org)
 
-Available at [https://github.com/rtodea/js-tdd](https://github.com/rtodea/js-tdd).
+<img src="/Users/robert/git/weblog/assets/node-js-unit-test-starter/Unit-Testing-Framework.svg" alt="Synopsis"/>
 
-_TODO:_ _add GoogleDrive image_
+Available at [https://github.com/rtodea/js-tdd](https://github.com/rtodea/js-tdd).
