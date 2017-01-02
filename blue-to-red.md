@@ -57,20 +57,28 @@ It has a CSV export feature that can provide the following columns:
 
 _Add new timesheet_ form:
 
-* Name
-* Start date
+* Name --- it is actually the project name
+* Start date --- it should be se to one 2 dates (1st or 16th of the current month)
 
 _Edit timesheet_ form contains a _Time Entries_ table:
 
 * Date
-* Task code
-* Blue number
-* Task Description
+* Task code --- relevant ones are `*-EST`, `*-WEB`
+* Blue number --- ticket identifier
+* Task Description --- ticket title
 * Hours
 
 ## Implementation Steps
 
 1. Manually export from Blue the CSV report into `exportData.csv`
 1. Split `exportData.csv` into per billing project entries
-1. For each billing project create a CSV report with the correct columns
+    1. what happens when some tickets lack the "Billing - Project" field?
+        1. generate `no-billing.csv` file
+    1. some are known to apply to different project regardless of the one assigned
+        1. `special-tickets-in.csv` file for those must be provided
+        1. `special-tickets-out.csv` file will be generated with the correct entries
+1. For each billing project create a CSV report with the Red columns
 1. Import the CSV into Red
+    1. use a web driver to put the correct entries (e.g. [`webdriver.io`](http://webdriver.io/))
+    1. use a [`*.user.js`](https://github.com/OpenUserJs/OpenUserJS.org/wiki/Userscript-beginners-HOWTO) 
+    triggered by [`Tampermonkey`](https://github.com/OpenUserJs/OpenUserJS.org/wiki/Tampermonkey-for-Chrome)
