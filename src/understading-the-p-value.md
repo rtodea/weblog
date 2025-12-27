@@ -8,9 +8,9 @@ Let's explore the concept of a P-Value from first principles using a simple expe
 
 ## The Experiment
 
-Imagine we have a standard 6-sided die. If it is fair, each face (1 through 6) has an equal probability of appearing ($p = 1/6 \approx 0.167$).
+Imagine we have a standard 6-sided die. If it is fair, each face (1 through 6) has an equal probability of appearing (${tex`p = 1/6 \approx 0.167`}).
 
-We can simulate rolling this die $N$ times.
+We can simulate rolling this die ${tex`N`} times.
 
 ```js
 const rollsInput = Inputs.range([10, 1000], {value: 100, step: 10, label: "Number of Rolls (N)"});
@@ -40,23 +40,23 @@ Plot.plot({
 })
 ```
 
-The red line shows the expected count for a perfectly fair die ($N/6$). As you increase $N$, the actual counts should cluster more closely around this line relative to the total size.
+The red line shows the expected count for a perfectly fair die (${tex`N/6`}). As you increase ${tex`N`}, the actual counts should cluster more closely around this line relative to the total size.
 
 ## Is the Die Rigged?
 
 Now, suppose we suspect the die is **rigged** to show a specific number (say, 6) more often than it should.
 
-How many times do we need to see a "6" in $N$ rolls to be confident it's not just luck?
+How many times do we need to see a "6" in ${tex`N`} rolls to be confident it's not just luck?
 
 This is where the **P-Value** comes in. The P-Value is the probability of seeing a result as extreme as (or more extreme than) what we observed, assuming the die is fair (the Null Hypothesis).
 
-If this probability is very low (typically below a threshold $\alpha$, like 0.05 or 5%), we reject the Null Hypothesis and conclude the die is likely rigged.
+If this probability is very low (typically below a threshold ${tex`\alpha`}, like 0.05 or 5%), we reject the Null Hypothesis and conclude the die is likely rigged.
 
 ### Calculator
 
 Enter your criteria below to find the "tipping point".
 
-1.  **Significance Level ($\alpha$):** The probability threshold for calling it "rigged" when it's actually fair (false positive rate). Commonly 0.05 (5%) or 0.01 (1%).
+1.  **Significance Level (${tex`\alpha`}):** The probability threshold for calling it "rigged" when it's actually fair (false positive rate). Commonly 0.05 (5%) or 0.01 (1%).
 2.  **Target Face:** The number we suspect the die is biased towards.
 3.  **Number of Rolls (N):** The total rolls.
 
@@ -125,14 +125,18 @@ const criticalValue = findCriticalValue(nCheck, pFair, alpha);
 ### Result
 
 ```js
-display(html`<div style="background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 5px solid #333;">
-  <h3>Verdict</h3>
-  <p>For <b>${nCheck}</b> rolls, assuming a fair die:</p>
-  <p>If you see the number <b>${targetFace}</b> appear <strong>${criticalValue}</strong> times or more,</p>
-  <p>We can say it is <b>rigged</b> with a p-value < ${alpha}.</p>
-  <hr/>
-  <p><small>Expected count for fair die: ${(nCheck/6).toFixed(1)}</small></p>
-</div>`);
+display(html`
+<div style="background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 5px solid #333;">
+<h3>Verdict</h3>
+
+<p>For <b>${nCheck}</b> rolls, assuming a fair die:</p>
+<p>If you see the number <b>${targetFace}</b> appear <strong>${criticalValue}</strong> times or more,</p>
+<p>We can say it is <b>rigged</b> with a p-value ${alpha}.</p>
+<hr/>
+<p><small>Expected count for fair die: 
+${(nCheck/6).toFixed(1)}</small></p>
+</div>
+`);
 ```
 
 
@@ -142,10 +146,12 @@ This means if you count the occurrences of ${targetFace}, and the count is less 
 
 To understand exactly how that "critical value" is calculated, let's switch to a simpler example: a coin flip.
 
-Assuming we observed more heads than average (so $k > n/2$), the formula for the two-tailed p-value is:
+Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the formula for the two-tailed p-value is:
 
-$$\text{p-value} = 2 \times \sum_{i=k}^{n} \binom{n}{i} 0.5^n$$
+```tex
+\text{p-value} = 2 \times \sum_{i=k}^{n} \binom{n}{i} 0.5^n
+```
 
-This literally translates to: "Calculate the probability for $i$ heads, where $i$ starts at your result $k$ and goes up to $n$. Add them all up. Then double it.
+This literally translates to: 
 
-
+> Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
