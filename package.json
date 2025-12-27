@@ -1,0 +1,26 @@
+{
+  "name": "weblog",
+  "version": "1.0.0",
+  "description": "This is the front page.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "observable preview",
+    "build": "observable build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rtodea/weblog.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/rtodea/weblog/issues"
+  },
+  "homepage": "https://github.com/rtodea/weblog#readme",
+  "devDependencies": {
+    "@observablehq/framework": "^1.13.3"
+  }
+}
