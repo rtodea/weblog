@@ -73,7 +73,7 @@ Enter your criteria below to find the **tipping point**.
 
 ```js
 const form = Inputs.form({
-  alpha: Inputs.number([0.001, 0.5], {value: 0.05, step: 0.005, label: "Significance Level (α)"}),
+  confidence: Inputs.range([50, 99.9], {value: 95, step: 0.1, label: "Confidence Level (%)"}),
   n: Inputs.number([1, 10000], {value: 10, label: "N (Tosses)"})
 });
 const values = Generators.input(form);
@@ -81,7 +81,8 @@ view(form);
 ```
 
 ```js
-const alpha = values.alpha;
+const confidence = values.confidence;
+const alpha = (100 - confidence) / 100;
 const nCheck = values.n;
 const pFair = 0.5;
 
@@ -100,15 +101,15 @@ function binomialPMF(k, n, p) {
 }
 
 function findCriticalValue(n, p, alpha) {
-  let cumulativeProb = 0;
-  for (let k = 0; k <= n; k++) {
-    let prob = binomialPMF(k, n, p);
-    cumulativeProb += prob;
-    if (1 - cumulativeProb <= alpha) {
-        return k + 1;
+  const upperTailAlpha = alpha / 2;
+  let probSum = 0;
+  for (let k = n; k >= 0; k--) {
+    probSum += binomialPMF(k, n, p);
+    if (probSum > upperTailAlpha) {
+      return k + 1;
     }
   }
-  return n + 1;
+  return n + 1; // Fallback
 }
 
 const criticalValue = findCriticalValue(nCheck, pFair, alpha);
@@ -118,20 +119,21 @@ const criticalValue = findCriticalValue(nCheck, pFair, alpha);
 
 ```js
 display(html`
-<div style="background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 5px solid #333;">
-<h3>Verdict</h3>
+<div class="card" style="padding: 20px; border-left: 5px solid var(--theme-foreground-muted, #ccc); display: flex; flex-direction: column; gap: 10px;">
+<h3 style="margin: 0; color: var(--theme-foreground-focus);">Verdict</h3>
 
-<p>For <b>${nCheck}</b> tosses, assuming a fair coin:</p>
-<p>If you see <b>Heads</b> appear <strong>${criticalValue}</strong> times or more,</p>
-<p>We can say it is <b>rigged</b> with a ${tex`p`}-value < ${alpha}.</p>
-<hr/>
-<p><small>Expected count for fair coin: 
-${(nCheck/2).toFixed(1)}</small></p>
+<p style="margin: 0;">For <b>${nCheck}</b> tosses, assuming a fair coin:</p>
+<p style="margin: 0;">If you see <b>Heads</b> appear <strong>${criticalValue}</strong> times or more,</p>
+<p style="margin: 0;">We can say it is <b>rigged</b> at the <strong>${confidence}%</strong> confidence level.</p>
+<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--theme-foreground-faintest); font-size: 0.8em; color: var(--theme-foreground-muted);">
+Expected count for fair coin: ${(nCheck/2).toFixed(1)} <br/>
+(p-value threshold: < ${alpha.toFixed(3)})
+</div>
 </div>
 `);
 ```
 
-This means if you count the occurrences of Heads, and the count is less than ${criticalValue}, you cannot statistically claim it's rigged at the ${alpha} confidence level (you fail to reject the **Null Hypothesis**).
+This means if you count the occurrences of Heads, and the count is less than ${criticalValue}, you cannot statistically claim it's rigged at the ${confidence}% confidence level (you fail to reject the **Null Hypothesis**).
 
 ## The Math Behind the Calculator
 
