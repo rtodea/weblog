@@ -62,16 +62,44 @@ camera.position.z = 15;
 camera.position.y = 5;
 camera.lookAt(0, 0, 0);
 
+const goldColor = "#ffd700";
+const silverColor = "#888888";
 const coinGeometry = new THREE.CylinderGeometry(1, 1, 0.2, 32);
-const goldMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.7, roughness: 0.3 });
-const silverMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.7, roughness: 0.3 });
+
+function createCoinFace(text, bgColor, textColor) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.fillStyle = textColor;
+  ctx.font = "bold 80px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 64, 64);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const headsTexture = createCoinFace("H", goldColor, silverColor);
+const tailsTexture = createCoinFace("T", silverColor, goldColor);
+
+const goldMaterial = new THREE.MeshStandardMaterial({ map: headsTexture, metalness: 0.7, roughness: 0.3 });
+const silverMaterial = new THREE.MeshStandardMaterial({ map: tailsTexture, metalness: 0.6, roughness: 0.4 });
+const edgeMaterial = new THREE.MeshStandardMaterial({ color: 0xb0b0b0, metalness: 0.8, roughness: 0.2 });
+
+const coinMaterials = [edgeMaterial, goldMaterial, silverMaterial];
+
 
 const coins = [];
 const maxAnimate = Math.min(rolls, 50); // Limit animation for performance
 
 for (let i = 0; i < maxAnimate; i++) {
   const isHeads = data[i] === "Heads";
-  const coin = new THREE.Mesh(coinGeometry, isHeads ? goldMaterial : silverMaterial);
+  const coin = new THREE.Mesh(coinGeometry, coinMaterials);
+
   
   // Start positions
   coin.position.set((Math.random() - 0.5) * 20, 15 + Math.random() * 20, (Math.random() - 0.5) * 5);
