@@ -68,23 +68,24 @@ If this probability is very low (typically below a threshold, denoted as ${tex`\
 
 Enter your criteria below to find the **tipping point**.
 
-1.  **Significance Level (${tex`\alpha`}):** The probability threshold for rejecting the **Null Hypothesis** when it's actually true (false positive rate). Commonly ${tex`\alpha = 0.05`} (${tex`5`}%) or ${tex`0.01`} (${tex`1`}%).
+1.  **Significance Level (${tex`\alpha`}):** The probability threshold for rejecting the **Null Hypothesis** when it's actually true (false positive rate).
 2.  **Number of Rolls (N):** The total tosses.
 
 ```js
-const alphaInput = Inputs.number([0.001, 0.5], {value: 0.05, step: 0.005, label: "Significance Level (α)"});
-const alpha = Generators.input(alphaInput);
-view(alphaInput);
+const form = Inputs.form({
+  alpha: Inputs.number([0.001, 0.5], {value: 0.05, step: 0.005, label: "Significance Level (α)"}),
+  n: Inputs.number([1, 10000], {value: 10, label: "N (Tosses)"})
+});
+const values = Generators.input(form);
+view(form);
 ```
 
 ```js
-const nCheckInput = Inputs.number([1, 10000], {value: 10, label: "N (Tosses)"});
-const nCheck = Generators.input(nCheckInput);
-view(nCheckInput);
-```
+const alpha = values.alpha;
+const nCheck = values.n;
+const pFair = 0.5;
 
-```js
-// Binomial Probability helper functions
+// Helper functions (defined locally to ensure visibility)
 function combinations(n, k) {
   if (k < 0 || k > n) return 0;
   if (k === 0 || k === n) return 1;
@@ -99,9 +100,6 @@ function binomialPMF(k, n, p) {
 }
 
 function findCriticalValue(n, p, alpha) {
-  // We want smallest k such that P(X >= k) <= alpha
-  // Which is 1 - P(X < k) <= alpha  => P(X < k) >= 1 - alpha
-  
   let cumulativeProb = 0;
   for (let k = 0; k <= n; k++) {
     let prob = binomialPMF(k, n, p);
@@ -113,10 +111,8 @@ function findCriticalValue(n, p, alpha) {
   return n + 1;
 }
 
-const pFair = 0.5;
 const criticalValue = findCriticalValue(nCheck, pFair, alpha);
-
-
+```
 
 ### Result
 
