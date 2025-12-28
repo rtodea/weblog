@@ -4,7 +4,16 @@ title: Understanding the p-Value
 
 # Understanding the ${tex`p`}-Value
 
-Let's explore the concept of a ${tex`p`}-Value from first principles using a simple experiment: **tossing a coin**.
+**Why do we care about ${tex`p`}-values?**
+
+In science, medicine, and critical thinking, we often need to decide if an observation is "real" or just a random fluke. For example:
+*   Does a new drug *actually* cure a disease, or did patients get better on their own?
+*   Is a coin *actually* rigged, or did we just get lucky with 10 Heads in a row?
+*   Is a global temperature rise *actually* significant, or is it normal fluctuation?
+
+The **${tex`p`}-value** is the standard tool we use to quantify this uncertainty. It helps us draw the line between "random noise" and "statistically significant discovery."
+
+Let's explore the concept from first principles using a simple experiment: **tossing a coin**.
 
 ## The Experiment
 
@@ -66,7 +75,9 @@ Enter your criteria below to find the **tipping point**.
 const alphaInput = Inputs.number([0.001, 0.5], {value: 0.05, step: 0.005, label: "Significance Level (α)"});
 const alpha = Generators.input(alphaInput);
 view(alphaInput);
+```
 
+```js
 const nCheckInput = Inputs.number([1, 10000], {value: 10, label: "N (Tosses)"});
 const nCheck = Generators.input(nCheckInput);
 view(nCheckInput);
@@ -104,7 +115,8 @@ function findCriticalValue(n, p, alpha) {
 
 const pFair = 0.5;
 const criticalValue = findCriticalValue(nCheck, pFair, alpha);
-```
+
+
 
 ### Result
 

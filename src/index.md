@@ -8,4 +8,4 @@ This blog creates interactive data visualizations using Observable Framework.
 
 ## Posts
 
-- [Understanding the P-Value](./understading-the-p-value)
+- [Understanding the P-Value](./understanding-the-p-value)
