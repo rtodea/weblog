@@ -36,6 +36,94 @@ const counts = d3.rollup(data, v => v.length, d => d);
 const flatCounts = Array.from(counts, ([face, count]) => ({face, count}));
 ```
 
+```js
+const THREE = await import("https://esm.sh/three@0.160.0");
+
+const container = html`<div style="width: 100%; height: 300px; background: var(--theme-background-alt); border-radius: 8px; overflow: hidden; position: relative;"></div>`;
+display(container);
+
+const width = container.clientWidth || 640;
+const height = 300;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(width, height);
+renderer.setPixelRatio(window.devicePixelRatio);
+container.appendChild(renderer.domElement);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);
+
+camera.position.z = 15;
+camera.position.y = 5;
+camera.lookAt(0, 0, 0);
+
+const coinGeometry = new THREE.CylinderGeometry(1, 1, 0.2, 32);
+const goldMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.7, roughness: 0.3 });
+const silverMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.7, roughness: 0.3 });
+
+const coins = [];
+const maxAnimate = Math.min(rolls, 50); // Limit animation for performance
+
+for (let i = 0; i < maxAnimate; i++) {
+  const isHeads = data[i] === "Heads";
+  const coin = new THREE.Mesh(coinGeometry, isHeads ? goldMaterial : silverMaterial);
+  
+  // Start positions
+  coin.position.set((Math.random() - 0.5) * 20, 15 + Math.random() * 20, (Math.random() - 0.5) * 5);
+  coin.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+  
+  const velocity = -0.1 - Math.random() * 0.1;
+  const rotationSpeed = {
+    x: (Math.random() - 0.5) * 0.2,
+    y: (Math.random() - 0.5) * 0.2,
+    z: (Math.random() - 0.5) * 0.2
+  };
+  
+  scene.add(coin);
+  coins.push({ mesh: coin, vel: velocity, rot: rotationSpeed, landingY: 0, landed: false, targetRotX: isHeads ? Math.PI / 2 : -Math.PI / 2 });
+}
+
+let frame = 0;
+function animate() {
+  frame++;
+  let allLanded = true;
+  coins.forEach(c => {
+    if (!c.landed) {
+      c.mesh.position.y += c.vel;
+      c.mesh.rotation.x += c.rot.x;
+      c.mesh.rotation.y += c.rot.y;
+      c.mesh.rotation.z += c.rot.z;
+      
+      if (c.mesh.position.y <= c.landingY) {
+        c.mesh.position.y = c.landingY;
+        c.mesh.rotation.set(c.targetRotX, 0, 0); // Flat on ground
+        c.landed = true;
+      } else {
+        allLanded = false;
+      }
+    }
+  });
+
+  renderer.render(scene, camera);
+  if (!allLanded && frame < 1000) {
+    requestAnimationFrame(animate);
+  }
+}
+
+animate();
+
+invalidation.then(() => {
+  renderer.dispose();
+  scene.clear();
+});
+
+```
+
 Here are the results of our simulation:
 
 ```js
