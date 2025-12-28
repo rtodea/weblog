@@ -159,7 +159,27 @@ But we also have to consider the other side. If the coin were rigged to favor Ta
 > ${tex`3`} Heads
 
 Since the average is ${tex`5`}, getting ${tex`3`} Heads is just as "extreme" (${tex`2`} steps away) as getting ${tex`7`} Heads, just in the opposite direction.
+
+```mermaid
+graph LR
+    subgraph "Symmetry of 10 Coin Flips"
+    0[0] --- 1[1] --- 2[2] --- 3[3] --- 4[4] --- 5((Avg: 5)) --- 6[6] --- 7[7] --- 8[8] --- 9[9] --- 10[10]
+    end
+    style 5 fill:#f9f,stroke:#333,stroke-width:2px
+    style 3 fill:#f66,stroke:#333
+    style 7 fill:#f66,stroke:#333
+```
+
 This is what we call a two-tailed test: we care about extremes on both ends because the coin could be rigged to favor Heads **OR** Tails.
+
+```mermaid
+flowchart TD
+    Observed["Observed Result: 7 Heads"] --> Delta["Distance from Avg (5): +2"]
+    Delta --> HighTail["High Tail: 7, 8, 9, 10"]
+    Delta --> LowTail["Low Tail (Symmetric): 3, 2, 1, 0"]
+    HighTail & LowTail --> TwoTailed["Total p-Value = P(High) + P(Low)"]
+```
+
 So, to find the ${tex`p`}-value, we need to add up the probabilities of all these extreme outcomes:
 
 1. High side: ${tex`7`}, ${tex`8`}, ${tex`9`}, ${tex`10`} Heads
