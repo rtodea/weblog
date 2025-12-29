@@ -36,6 +36,8 @@ const counts = d3.rollup(data, v => v.length, d => d);
 const flatCounts = Array.from(counts, ([face, count]) => ({face, count}));
 ```
 
+A small simulation of tossing ${tex`N`} coins.
+
 ```js
 const THREE = await import("https://esm.sh/three@0.160.0");
 
@@ -58,8 +60,11 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
-camera.position.z = 15;
-camera.position.y = 5;
+// Adaptive camera position based on number of tosses
+const colsAdjust = Math.ceil(Math.sqrt(rolls));
+const adaptiveZ = Math.max(15, colsAdjust * 2.5);
+camera.position.z = adaptiveZ;
+camera.position.y = adaptiveZ * 0.7;
 camera.lookAt(0, 0, 0);
 
 const goldColor = "#ffd700";
@@ -86,25 +91,56 @@ function createCoinFace(text, bgColor, textColor) {
 const headsTexture = createCoinFace("H", goldColor, silverColor);
 const tailsTexture = createCoinFace("T", silverColor, goldColor);
 
-const goldMaterial = new THREE.MeshStandardMaterial({ map: headsTexture, metalness: 0.7, roughness: 0.3 });
-const silverMaterial = new THREE.MeshStandardMaterial({ map: tailsTexture, metalness: 0.6, roughness: 0.4 });
-const edgeMaterial = new THREE.MeshStandardMaterial({ color: 0xb0b0b0, metalness: 0.8, roughness: 0.2 });
+const goldMaterial = new THREE.MeshStandardMaterial({
+  map: headsTexture,
+  metalness: 0.7,
+  roughness: 0.3
+});
+const silverMaterial = new THREE.MeshStandardMaterial({
+  map: tailsTexture,
+  metalness: 0.6,
+  roughness: 0.4
+});
+const edgeMaterial = new THREE.MeshStandardMaterial({
+  color: 0xb0b0b0,
+  metalness: 0.8,
+  roughness: 0.2
+});
 
 const coinMaterials = [edgeMaterial, goldMaterial, silverMaterial];
 
 
 const coins = [];
-const maxAnimate = Math.min(rolls, 50); // Limit animation for performance
+const maxAnimate = rolls; // Animate all coins as requested
+
+// Grid parameters for non-overlapping landing spots
+const spacing = 2.5;
+
+const cols = Math.ceil(Math.sqrt(maxAnimate));
+const offset = ((cols - 1) * spacing) / 2;
 
 for (let i = 0; i < maxAnimate; i++) {
   const isHeads = data[i] === "Heads";
   const coin = new THREE.Mesh(coinGeometry, coinMaterials);
+  
+  // Grid position (row, col) with jitter
+  const gridX = (i % cols) * spacing - offset;
+  const gridZ = Math.floor(i / cols) * spacing - offset;
+  const jitterX = (Math.random() - 0.5) * 1;
+  const jitterZ = (Math.random() - 0.5) * 1;
+  
+  const targetX = gridX + jitterX;
+  const targetZ = gridZ + jitterZ;
 
-  
-  // Start positions
-  coin.position.set((Math.random() - 0.5) * 20, 15 + Math.random() * 20, (Math.random() - 0.5) * 5);
-  coin.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-  
+  // Start positions (high above target)
+  coin.position.set(targetX, 15 + Math.random() * 20, targetZ);
+
+  coin.rotation.set(
+    Math.random() * Math.PI,
+    Math.random() * Math.PI,
+    Math.random() * Math.PI
+  );
+
   const velocity = -0.1 - Math.random() * 0.1;
   const rotationSpeed = {
     x: (Math.random() - 0.5) * 0.2,
@@ -113,7 +149,15 @@ for (let i = 0; i < maxAnimate; i++) {
   };
   
   scene.add(coin);
-  coins.push({ mesh: coin, vel: velocity, rot: rotationSpeed, landingY: 0, landed: false, targetRotX: isHeads ? Math.PI / 2 : -Math.PI / 2 });
+  coins.push({
+    mesh: coin,
+    vel: velocity,
+    rot: rotationSpeed,
+    landingY: 0.1, // Half of cylinder height (0.2)
+    landed: false,
+    targetRotX: isHeads ? 0 : Math.PI,
+    targetRotZ: 0 // Keep H/T upright
+  });
 }
 
 let frame = 0;
@@ -129,7 +173,7 @@ function animate() {
       
       if (c.mesh.position.y <= c.landingY) {
         c.mesh.position.y = c.landingY;
-        c.mesh.rotation.set(c.targetRotX, 0, 0); // Flat on ground
+        c.mesh.rotation.set(c.targetRotX, 0, c.targetRotZ); // Flat and upright
         c.landed = true;
       } else {
         allLanded = false;
@@ -259,7 +303,7 @@ This means if you count the occurrences of Heads, and the count is less than ${c
 
 ### Quick ${tex`p`}-Value Calculator
 
-If you already have your results, use this calculator to find the ${tex`p`}-value directly.
+Here is the other way around, where we want to calculate the ${tex`p`}-value given a number of tosses and a number of Heads.
 
 ```js
 const quickForm = Inputs.form({
@@ -321,7 +365,7 @@ Verdict: <b>${pValueResult < 0.05 ? "Statistically Significant" : "Not Significa
 
 ## The Math Behind the Calculators
 
-To understand how that **critical value** is calculated, let's consider then following outcome:
+To understand how that **tipping point**/${tex`p`}-value is calculated, let's consider **only** the following example:
 
 > Out of ${tex`10`} coin flips, we got ${tex`7`} Heads.
 
@@ -329,18 +373,20 @@ Then we ask ourselves:
 
 > If the coin is indeed fair, what is the probability of it landing on Heads in a single toss?
 
-For getting a Head outcome, we have a ${tex`\frac{1}{2}`} probability of getting it.
+For landing on Heads, remember the probability formula: 
 
-To find the ${tex`p`}-value, we don't just look at the probability of the result we got (${tex`7`} Heads). 
-We have to look at how likely it is to get a result at least as extreme as the one we observed.
+> ${tex`P(A) = \frac{\text{Number of favorable outcomes}}{\text{Total number of possible outcomes}} = \frac{1}{2}`}
 
-> If "extreme" means straying far away from the expected average (${tex`\frac{10}{2}`} Heads), which other outcomes would be considered more extreme than getting ${tex`7`} Heads?
+To find the ${tex`p`}-value, we don't just look at the probability of the result we got, i.e. ${tex`7`} Heads. 
+We have to look at how likely it is to get a result at least as **extreme** as the one we observed.
+
+> If **extreme** means straying far away from the expected average (the average would be ${tex`10 \cdot \frac{1}{2} = 5`} Heads), which other outcomes would be considered more extreme than getting ${tex`7`} Heads?
 
 To calculate the ${tex`p`}-value, we need the probability of the result we got (${tex`7`}) plus the probability of anything more extreme.
 
-So, on the high side (lots of Heads), we care about the probability of getting ${tex`7`}, ${tex`8`}, ${tex`9`}, or ${tex`10`} Heads.
+So, on the _high side_ (lots of Heads), we care about the probability of getting ${tex`7`}, ${tex`8`}, ${tex`9`}, or ${tex`10`} Heads.
 
-But we also have to consider the other side. 
+But we also have to consider the _low side_. 
 If the coin were rigged to favor Tails, we would see very few Heads.
 
 > If ${tex`7`} Heads is "${tex`2`} steps" away from the average of ${tex`5`}, what number of Heads would be "${tex`2`} steps" away on the lower side?
@@ -402,7 +448,7 @@ We calculate the number of combinations for ${tex`8`}, ${tex`9`}, and ${tex`10`}
 2. ${tex`\binom{10}{9}`}
 3. ${tex`\binom{10}{10}`}
 
-So, let's summ up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the _high side_:
+So, let's sum up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the _high side_:
 
 * **${tex`7`} Heads:** ${tex`120`} ways
 * **${tex`8`} Heads:** ${tex`45`} ways
@@ -451,4 +497,63 @@ Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the f
 This literally translates to: 
 
 > Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
+
+## Using Other Languages
+
+### R
+
+`R` is a statistical programming language that is great for statistics and data analysis.
+
+The code:
+```r
+n <- 10
+k <- 8
+binom.test(k,n,p=0.5,alternative='two.sided')
+```
+
+In a Docker friendly one liner:
+
+```powershell
+docker run --rm r-base Rscript -e "n<-10; k<-8; res<-binom.test(k,n,p=0.5,alternative='two.sided'); cat(sprintf('n=%d k=%d p-value=%g\n',n,k,res`$p.value))"
+```
+
+### Julia
+
+`Julia` is a high-level, high-performance dynamic programming language for technical computing.
+
+```julia
+import Pkg
+Pkg.activate(; temp=true)
+Pkg.add("HypothesisTests")
+
+using HypothesisTests
+pvalue(BinomialTest(8, 10, 0.5))
+```
+
+In a Docker friendly one liner:
+
+```powershell
+docker run --rm julia:1.9.3 julia -e 'import Pkg; Pkg.activate(; temp=true); Pkg.add(\"HypothesisTests\"); using HypothesisTests; println(pvalue(BinomialTest(8, 10, 0.5)))'
+```
+
+## Further Reading
+
+### Binomial Tests
+
+Binomial tests are a type of statistical test that is used to determine if there is a significant difference between the expected and observed number of successes in a sample.
+
+1. [Wikipedia: Binomial Test](https://en.wikipedia.org/wiki/Binomial_test)
+
+### Two-tailed vs One-tailed Tests
+
+In the coin toss example, we used a two-tailed test because we were interested in both tails (high and low).
+
+If we want to write the formula in a more general sense, without assuming the two-tailed test, we can use the following formula:
+
+Under ${tex`H_0`}, the number of heads ${tex`K`} follows a binomial distribution:
+${tex`K\sim \mathrm{Binomial}(n,0.5)`}
+The ${tex`p`}-value is:
+
+> ${tex`\mathrm{p-value}=P(|K-n/2|\geq |k-n/2|\mid H_0)`}
+
 
