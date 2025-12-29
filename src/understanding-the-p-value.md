@@ -253,22 +253,27 @@ This means if you count the occurrences of Heads, and the count is less than ${c
 
 ## The Math Behind the Calculator
 
-To understand how that **critical value** is calculated, let's consider the coin flip.
+To understand how that **critical value** is calculated, let's consider then following outcome:
+
+> Out of ${tex`10`} coin flips, we got ${tex`7`} Heads.
+
+Then we ask ourselves:
 
 > If the coin is indeed fair, what is the probability of it landing on Heads in a single toss?
 
-Since we are tossing the coin ${tex`${nCheck}`} times, we are looking at a **Binomial Distribution**. 
-This helps us calculate the probability of getting any specific number of Heads (from ${tex`0`} to ${tex`${nCheck}`}).
+For getting a Head outcome, we have a ${tex`\frac{1}{2}`} probability of getting it.
 
-To find the ${tex`p`}-value, we don't just look at the probability of the result we got (${tex`${criticalValue}`} Heads). We have to look at how likely it is to get a result at least as extreme as the one we observed.
+To find the ${tex`p`}-value, we don't just look at the probability of the result we got (${tex`7`} Heads). 
+We have to look at how likely it is to get a result at least as extreme as the one we observed.
 
-> If "extreme" means straying far away from the expected average (${tex`${nCheck / 2}`} Heads), which other outcomes would be considered more extreme than getting ${tex`${criticalValue}`} Heads?
+> If "extreme" means straying far away from the expected average (${tex`\frac{10}{2}`} Heads), which other outcomes would be considered more extreme than getting ${tex`7`} Heads?
 
-To calculate the ${tex`p`}-value, we need the probability of the result we got (${tex`${criticalValue}`}) plus the probability of anything more extreme.
+To calculate the ${tex`p`}-value, we need the probability of the result we got (${tex`7`}) plus the probability of anything more extreme.
 
 So, on the high side (lots of Heads), we care about the probability of getting ${tex`7`}, ${tex`8`}, ${tex`9`}, or ${tex`10`} Heads.
 
-But we also have to consider the other side. If the coin were rigged to favor Tails, we would see very few Heads.
+But we also have to consider the other side. 
+If the coin were rigged to favor Tails, we would see very few Heads.
 
 > If ${tex`7`} Heads is "${tex`2`} steps" away from the average of ${tex`5`}, what number of Heads would be "${tex`2`} steps" away on the lower side?
 
@@ -277,7 +282,7 @@ But we also have to consider the other side. If the coin were rigged to favor Ta
 Since the average is ${tex`5`}, getting ${tex`3`} Heads is just as "extreme" (${tex`2`} steps away) as getting ${tex`7`} Heads, just in the opposite direction.
 
 ```mermaid
-graph LR
+graph TD
     subgraph "Symmetry of 10 Coin Flips"
     0[0] --- 1[1] --- 2[2] --- 3[3] --- 4[4] --- 5((Avg: 5)) --- 6[6] --- 7[7] --- 8[8] --- 9[9] --- 10[10]
     end
@@ -313,8 +318,8 @@ This accounts for the ${tex`7`} Heads, but we're missing two pieces to get the f
 1. **The Tails:** We tossed the coin ${tex`10`} times, so if we got ${tex`7`} Heads, we effectively also got ${tex`3`} Tails.
 We need to multiply by the probability of those tails (0.5^3).
 * ${tex`0.5^7 \times 0.5^3 = 0.5^{10}`}
-* This is the probability of *one specific sequence* (e.g., H H H H H H H T T T).
-2. **The Arrangements:** The Heads don't have to appear first. They could be mixed in (e.g., H T H T H H H H T H). We need to count how many different "shuffles" or ways there are to get ${tex`7`} heads out of ${tex`10`}.
+* This is the probability of *one specific sequence* (e.g., `H H H H H H H T T T`).
+2. **The Arrangements:** The Heads don't have to appear first. They could be mixed in (e.g., `H T H T H H H H T H`). We need to count how many different "shuffles" or ways there are to get ${tex`7`} heads out of ${tex`10`}.
 
 Since we have ${tex`10`} tosses and want to choose which ${tex`7`} of them are Heads, we need to calculate ${tex`\binom{10}{7}`}.
 The formula is: 
@@ -351,9 +356,9 @@ To find the **${tex`p`}-value**, we just divide the number of specific outcomes 
 
 ${tex`\frac{176}{1024} \approx 0.1719`}.
 
-That is correct. The ${tex`p`}-value is approximately **${tex`0.172`}** (or ${tex`17.2`}%).
-
-Here is what that number tells us: If you had a perfectly fair coin and repeated this ${tex`10`}-toss experiment many times, you would see a result this extreme (or more extreme) about **${tex`17.2`}% of the time** just by pure luck.
+Here is what that number tells us: 
+If you had a perfectly fair coin and repeated this ${tex`10`}-toss experiment many times,
+you would see a result this extreme (or more extreme) about **${tex`17.2`}% of the time** just by pure luck.
 
 In statistics, we need a standard to decide if an event is "rare enough" to reject our assumption that the coin is fair.
 This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and it is commonly set at **${tex`0.05`}** (${tex`5`}%).
