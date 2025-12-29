@@ -238,9 +238,15 @@ display(html`
 <div class="card" style="padding: 20px; border-left: 5px solid var(--theme-foreground-muted, #ccc); display: flex; flex-direction: column; gap: 10px;">
 <h3 style="margin: 0; color: var(--theme-foreground-focus);">Verdict</h3>
 
-<p style="margin: 0;">For <b>${nCheck}</b> tosses, assuming a fair coin:</p>
-<p style="margin: 0;">If you see <b>Heads</b> appear <strong>${criticalValue}</strong> times or more,</p>
-<p style="margin: 0;">We can say it is <b>rigged</b> at the <strong>${confidence}%</strong> confidence level.</p>
+<p style="margin: 0;">
+For <b>${nCheck}</b> tosses, assuming a fair coin:
+</p>
+<p style="margin: 0;">
+If you see <b>Heads</b> appear <strong>${criticalValue}</strong> times or more,
+</p>
+<p style="margin: 0;">
+We can say it is <b>rigged</b> at the <strong>${confidence}%</strong> confidence level.
+</p>
 <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--theme-foreground-faintest); font-size: 0.8em; color: var(--theme-foreground-muted);">
 Expected count for fair coin: ${(nCheck/2).toFixed(1)} <br/>
 (p-value threshold: < ${alpha.toFixed(3)})
@@ -301,15 +307,17 @@ flowchart TD
     HighTail & LowTail --> TwoTailed["Total p-Value = P(High) + P(Low)"]
 ```
 
-So, to find the ${tex`p`}-value, we need to add up the probabilities of all these extreme outcomes:
+To find the ${tex`p`}-value, we need to add up the probabilities of all these extreme outcomes:
 
 1. High side: ${tex`7`}, ${tex`8`}, ${tex`9`}, ${tex`10`} Heads
 2. Low side: ${tex`3`}, ${tex`2`}, ${tex`1`}, ${tex`0`} Heads
 
-Because the fair coin (${tex`p=0.5`}) is symmetric, the probability of the high side is identical to the probability of the low side.
-We can just calculate the probability for the high side (${tex`7`}, ${tex`8`}, ${tex`9`}, ${tex`10`}) and double it.
+Because the fair coin (${tex`p=0.5`}) is symmetric, the probability of the _high side_ is identical to the probability of the low side.
+We can just calculate the probability for the _high side_ (${tex`7`}, ${tex`8`}, ${tex`9`}, ${tex`10`}) and double it.
 
-> Let's start with the first one. How to calculate the probability of getting exactly ${tex`7`} Heads in ${tex`10`} tosses?
+> How to calculate the probability of getting exactly ${tex`7`} Heads in ${tex`10`} tosses?
+
+One way would be to consider this:
 
 > ${tex`\binom{10}{7} \times 0.5^7 \times 0.5^3`} ?
 
@@ -332,14 +340,18 @@ We calculate the number of combinations for ${tex`8`}, ${tex`9`}, and ${tex`10`}
 2. ${tex`\binom{10}{9}`}
 3. ${tex`\binom{10}{10}`}
 
-So, let's tally up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the high side:
+So, let's summ up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the _high side_:
 
 * **${tex`7`} Heads:** ${tex`120`} ways
 * **${tex`8`} Heads:** ${tex`45`} ways
 * **${tex`9`} Heads:** ${tex`10`} ways
 * **${tex`10`} Heads:** ${tex`1`} way
 
-If you add those together (${tex`120 + 45 + 10 + 1`}), you get **${tex`176`}** ways.
+If you add those together (${tex`120 + 45 + 10 + 1`}), you get **${tex`176`}** ways for the *high side* only. 
+
+Since it is a symmetric two-tailed test, we also have **${tex`176`}** ways for the *low side*. 
+
+Adding them together (${tex`176 + 176`}), we get **${tex`352`}** total ways to see a result as extreme as ours.
 
 To turn this count into a probability, we need to divide it by the **total number of possible outcomes** for ${tex`10`} coin tosses.
 
@@ -350,15 +362,15 @@ Since there are ${tex`2`} possibilities for each of the ${tex`10`} tosses, we ca
 So, here is the situation:
 
 * **Total possible outcomes:** ${tex`1024`}
-* **Outcomes as extreme as ours (or more):** ${tex`176`} (we calculated this by adding up the ways to get ${tex`7`}, ${tex`8`}, ${tex`9`}, ${tex`10`}, ${tex`3`}, ${tex`2`}, ${tex`1`}, and ${tex`0`} Heads).
+* **Outcomes as extreme as ours (or more):** ${tex`352`} (we calculated this by adding up the ways for both tails).
 
 To find the **${tex`p`}-value**, we just divide the number of specific outcomes by the total number of possible outcomes.
 
-${tex`\frac{176}{1024} \approx 0.1719`}.
+${tex`\frac{352}{1024} \approx 0.3438`}.
 
 Here is what that number tells us: 
 If you had a perfectly fair coin and repeated this ${tex`10`}-toss experiment many times,
-you would see a result this extreme (or more extreme) about **${tex`17.2`}% of the time** just by pure luck.
+you would see a result this extreme (or more extreme) about **${tex`34.4`}% of the time** just by pure luck.
 
 In statistics, we need a standard to decide if an event is "rare enough" to reject our assumption that the coin is fair.
 This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and it is commonly set at **${tex`0.05`}** (${tex`5`}%).
@@ -366,7 +378,7 @@ This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and
 * If the ${tex`p`}-value is **less than  ${tex`\alpha`}**, the event is so rare that we reject the **Null Hypothesis** (we say the coin is rigged).
 * If the ${tex`p`}-value is **greater than ${tex`\alpha`}**, the event could easily happen by chance, so we keep the **Null Hypothesis** (we assume the coin is fair).
 
-### Final Formula
+### Generic Formula
 
 Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the formula for the two-tailed ${tex`p`}-value is:
 
@@ -377,3 +389,65 @@ Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the f
 This literally translates to: 
 
 > Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
+
+### Quick ${tex`p`}-Value Calculator
+
+If you already have your results, use this calculator to find the ${tex`p`}-value directly.
+
+```js
+const quickForm = Inputs.form({
+  nQuick: Inputs.number([1, 10000], {value: 10, label: "Total Tosses (n)"}),
+  kQuick: Inputs.number([0, 10000], {value: 7, label: "Observed Heads (k)"})
+});
+const quickValues = Generators.input(quickForm);
+view(quickForm);
+```
+
+```js
+const n2 = quickValues.nQuick;
+const k2 = quickValues.kQuick;
+
+function calculatePValue(n, k) {
+  if (k < 0 || k > n) return 0;
+  
+  // Calculate probability of being at least as extreme
+  // For p=0.5, the distribution is symmetric around n/2
+  const expected = n / 2;
+  const distance = Math.abs(k - expected);
+  
+  // High side extreme: k >= expected + distance
+  // Low side extreme: k <= expected - distance
+  const kHigh = Math.ceil(expected + distance);
+  
+  let probHigh = 0;
+  for (let i = kHigh; i <= n; i++) {
+    probHigh += binomialPMF(i, n, 0.5);
+  }
+  
+  // Two-tailed p-value is 2 * probHigh (due to symmetry)
+  // Cap at 1.0 (e.g. if k is exactly n/2, probHigh is > 0.5)
+  return Math.min(1, 2 * probHigh);
+}
+
+const pValueResult = calculatePValue(n2, k2);
+```
+
+### ${tex`p`}-Value Result
+
+```js
+display(html`
+<div class="card" style="padding: 20px; border-left: 5px solid var(--theme-foreground-muted, #ccc); display: flex; flex-direction: column; gap: 10px;">
+<h3 style="margin: 0; color: var(--theme-foreground-focus);">${tex`p`}-Value Result</h3>
+
+<p style="margin: 0;">
+For <b>${k2}</b> heads in <b>${n2}</b> tosses:
+</p>
+<p style="margin: 0; font-size: 1.5em;">
+${tex`p`}-value = <strong>${pValueResult.toFixed(4)}</strong>
+</p>
+<p style="margin: 0;">
+Verdict: <b>${pValueResult < 0.05 ? "Statistically Significant" : "Not Significant"}</b> (at ${tex`\alpha = 0.05`})
+</p>
+</div>
+`);
+```
