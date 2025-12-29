@@ -180,7 +180,7 @@ This is where the **${tex`p`}-Value** comes in. The ${tex`p`}-Value is the proba
 
 If this probability is very low (typically below a threshold, denoted as ${tex`\alpha`}, like ${tex`0.05`} or ${tex`5`}%), we reject the **Null Hypothesis** and conclude the coin is **likely rigged**.
 
-### Calculator
+### Tipping Point Calculator
 
 Enter your criteria below to find the **tipping point**.
 
@@ -257,7 +257,69 @@ Expected count for fair coin: ${(nCheck/2).toFixed(1)} <br/>
 
 This means if you count the occurrences of Heads, and the count is less than ${criticalValue}, you cannot statistically claim it's rigged at the ${confidence}% confidence level (you fail to reject the **Null Hypothesis**).
 
-## The Math Behind the Calculator
+### Quick ${tex`p`}-Value Calculator
+
+If you already have your results, use this calculator to find the ${tex`p`}-value directly.
+
+```js
+const quickForm = Inputs.form({
+  nQuick: Inputs.number([1, 10000], {value: 10, label: "Total Tosses (n)"}),
+  kQuick: Inputs.number([0, 10000], {value: 7, label: "Observed Heads (k)"})
+});
+const quickValues = Generators.input(quickForm);
+view(quickForm);
+```
+
+```js
+const n2 = quickValues.nQuick;
+const k2 = quickValues.kQuick;
+
+function calculatePValue(n, k) {
+  if (k < 0 || k > n) return 0;
+  
+  // Calculate probability of being at least as extreme
+  // For p=0.5, the distribution is symmetric around n/2
+  const expected = n / 2;
+  const distance = Math.abs(k - expected);
+  
+  // High side extreme: k >= expected + distance
+  // Low side extreme: k <= expected - distance
+  const kHigh = Math.ceil(expected + distance);
+  
+  let probHigh = 0;
+  for (let i = kHigh; i <= n; i++) {
+    probHigh += binomialPMF(i, n, 0.5);
+  }
+  
+  // Two-tailed p-value is 2 * probHigh (due to symmetry)
+  // Cap at 1.0 (e.g. if k is exactly n/2, probHigh is > 0.5)
+  return Math.min(1, 2 * probHigh);
+}
+
+const pValueResult = calculatePValue(n2, k2);
+```
+
+### ${tex`p`}-Value Result
+
+```js
+display(html`
+<div class="card" style="padding: 20px; border-left: 5px solid var(--theme-foreground-muted, #ccc); display: flex; flex-direction: column; gap: 10px;">
+<h3 style="margin: 0; color: var(--theme-foreground-focus);">${tex`p`}-Value Result</h3>
+
+<p style="margin: 0;">
+For <b>${k2}</b> heads in <b>${n2}</b> tosses:
+</p>
+<p style="margin: 0; font-size: 1.5em;">
+${tex`p`}-value = <strong>${pValueResult.toFixed(4)}</strong>
+</p>
+<p style="margin: 0;">
+Verdict: <b>${pValueResult < 0.05 ? "Statistically Significant" : "Not Significant"}</b> (at ${tex`\alpha = 0.05`})
+</p>
+</div>
+`);
+```
+
+## The Math Behind the Calculators
 
 To understand how that **critical value** is calculated, let's consider then following outcome:
 
@@ -390,64 +452,3 @@ This literally translates to:
 
 > Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
 
-### Quick ${tex`p`}-Value Calculator
-
-If you already have your results, use this calculator to find the ${tex`p`}-value directly.
-
-```js
-const quickForm = Inputs.form({
-  nQuick: Inputs.number([1, 10000], {value: 10, label: "Total Tosses (n)"}),
-  kQuick: Inputs.number([0, 10000], {value: 7, label: "Observed Heads (k)"})
-});
-const quickValues = Generators.input(quickForm);
-view(quickForm);
-```
-
-```js
-const n2 = quickValues.nQuick;
-const k2 = quickValues.kQuick;
-
-function calculatePValue(n, k) {
-  if (k < 0 || k > n) return 0;
-  
-  // Calculate probability of being at least as extreme
-  // For p=0.5, the distribution is symmetric around n/2
-  const expected = n / 2;
-  const distance = Math.abs(k - expected);
-  
-  // High side extreme: k >= expected + distance
-  // Low side extreme: k <= expected - distance
-  const kHigh = Math.ceil(expected + distance);
-  
-  let probHigh = 0;
-  for (let i = kHigh; i <= n; i++) {
-    probHigh += binomialPMF(i, n, 0.5);
-  }
-  
-  // Two-tailed p-value is 2 * probHigh (due to symmetry)
-  // Cap at 1.0 (e.g. if k is exactly n/2, probHigh is > 0.5)
-  return Math.min(1, 2 * probHigh);
-}
-
-const pValueResult = calculatePValue(n2, k2);
-```
-
-### ${tex`p`}-Value Result
-
-```js
-display(html`
-<div class="card" style="padding: 20px; border-left: 5px solid var(--theme-foreground-muted, #ccc); display: flex; flex-direction: column; gap: 10px;">
-<h3 style="margin: 0; color: var(--theme-foreground-focus);">${tex`p`}-Value Result</h3>
-
-<p style="margin: 0;">
-For <b>${k2}</b> heads in <b>${n2}</b> tosses:
-</p>
-<p style="margin: 0; font-size: 1.5em;">
-${tex`p`}-value = <strong>${pValueResult.toFixed(4)}</strong>
-</p>
-<p style="margin: 0;">
-Verdict: <b>${pValueResult < 0.05 ? "Statistically Significant" : "Not Significant"}</b> (at ${tex`\alpha = 0.05`})
-</p>
-</div>
-`);
-```
