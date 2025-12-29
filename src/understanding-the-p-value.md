@@ -216,9 +216,20 @@ As you increase ${tex`N`}, the actual counts should cluster more closely around 
 
 ## Is the Coin Rigged?
 
-Now, suppose we suspect the coin is **rigged** to show **Heads** more often than it should.
+Now, suppose we suspect the coin is **rigged**.
+This is where we could talk about two possible biases:
 
-How many times do we need to see "Heads" in ${tex`N`} tosses to be confident it's not just luck?
+1.  **Heads Bias:** The coin is rigged to show **Heads** more often than it should.
+2.  **Tails Bias:** The coin is rigged to show **Tails** more often than it should.
+
+So we could ask ourselves:
+
+1. Is the coin rigged towards only one direction? (one-sided bias)
+2. Is the coin rigged towards both directions? (two-sided bias)
+
+We will be testing the two-sided bias.
+
+How many times do we need to see, for example, "Heads" in ${tex`N`} tosses to be confident it's not just chance?
 
 This is where the **${tex`p`}-Value** comes in. The ${tex`p`}-Value is the probability of seeing a result as extreme as (or more extreme than) what we observed, assuming the coin is fair (the **Null Hypothesis**, denoted as ${tex`H_0`}).
 
@@ -371,7 +382,7 @@ To understand how that **tipping point**/${tex`p`}-value is calculated, let's co
 
 Then we ask ourselves:
 
-> If the coin is indeed fair, what is the probability of it landing on Heads in a single toss?
+> If the coin is indeed fair (no bias towards any of the sides), what is the probability of it landing on Heads in a single toss?
 
 For landing on Heads, remember the probability formula: 
 
@@ -382,7 +393,7 @@ We have to look at how likely it is to get a result at least as **extreme** as t
 
 > If **extreme** means straying far away from the expected average (the average would be ${tex`10 \cdot \frac{1}{2} = 5`} Heads), which other outcomes would be considered more extreme than getting ${tex`7`} Heads?
 
-To calculate the ${tex`p`}-value, we need the probability of the result we got (${tex`7`}) plus the probability of anything more extreme.
+To calculate the two-sided ${tex`p`}-value, we need the probability of the result we got (${tex`7`}) plus the probability of anything more extreme.
 
 So, on the _high side_ (lots of Heads), we care about the probability of getting ${tex`7`}, ${tex`8`}, ${tex`9`}, or ${tex`10`} Heads.
 
@@ -486,7 +497,7 @@ This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and
 * If the ${tex`p`}-value is **less than  ${tex`\alpha`}**, the event is so rare that we reject the **Null Hypothesis** (we say the coin is rigged).
 * If the ${tex`p`}-value is **greater than ${tex`\alpha`}**, the event could easily happen by chance, so we keep the **Null Hypothesis** (we assume the coin is fair).
 
-### Generic Formula
+### Generic Formula for Two-Tailed ${tex`p`}-Value
 
 Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the formula for the two-tailed ${tex`p`}-value is:
 
@@ -498,7 +509,7 @@ This literally translates to:
 
 > Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
 
-## Using Other Languages
+## Simulating the Coin Toss Experiment in Different Programming Languages
 
 ### R
 
@@ -564,22 +575,55 @@ The Docker friendly one liner:
 docker run --rm matlab Rscript -e "n<-10; k<-8; res<-binom.test(k,n,p=0.5,alternative='two.sided'); cat(sprintf('n=%d k=%d p-value=%g\n',n,k,res`$p.value))"
 ```
 
+### Python
+
+```python
+from scipy.stats import binom
+
+n = 10
+k = 8
+p = 0.5
+
+p_value = binom.sf(k, n, p) * 2
+print(p_value)
+```
+
+In a Docker friendly one liner:
+
+```powershell
+docker run --rm python:3.12-alpine python -c "from scipy.stats import binom; n=10; k=8; p=0.5; p_value=binom.sf(k, n, p) * 2; print(p_value)"
+```
+
 ## Further Reading
 
 ### Binomial Tests
 
 Binomial tests are a type of statistical test that is used to determine if there is a significant difference between the expected and observed number of successes in a sample.
 
+Why is it called "binomial"? Because it is based on the binomial distribution, which is a probability distribution that models the number of successes in a fixed number of independent Bernoulli trials.
+
+References:
+
 1. [Wikipedia: Binomial Test](https://en.wikipedia.org/wiki/Binomial_test)
+2. [Wikipedia: Binomial Distribution](https://en.wikipedia.org/wiki/Binomial_distribution)
 
 ### Two-tailed vs One-tailed Tests
 
-In the coin toss example, we used a two-tailed test because we were interested in both tails (high and low).
+In the coin toss example, we used a two-tailed test because we were interested in both extreme events (high tails and low tails), corresponding to the coin either being rigged for Heads or Tails.
+
+If we want to limit the test to one tail, we need to decide which tail we are interested in. 
+
+If testing heads bias (${tex`Pr(H|H_0)>0.5`}):
+> ${tex`P(K\geq k\mid H_0)`}
+
+If testing tails bias (${tex`Pr(T|H_0)<0.5`}):
+> ${tex`P(K\leq k\mid H_0)`}
 
 If we want to write the formula in a more general sense, without assuming the two-tailed test, we can use the following formula:
 
 Under ${tex`H_0`}, the number of heads ${tex`K`} follows a binomial distribution:
-${tex`K\sim \mathrm{Binomial}(n,0.5)`}
+> ${tex`K\sim \mathrm{Binomial}(n,0.5)`}
+
 The ${tex`p`}-value is:
 
-> ${tex`\mathrm{p-value}=P(|K-n/2|\geq |k-n/2|\mid H_0)`}
+> ${tex`P(|K-n/2|\geq |k-n/2|\mid H_0)`}
