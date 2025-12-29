@@ -536,6 +536,34 @@ In a Docker friendly one liner:
 docker run --rm julia:1.9.3 julia -e 'import Pkg; Pkg.activate(; temp=true); Pkg.add(\"HypothesisTests\"); using HypothesisTests; println(pvalue(BinomialTest(8, 10, 0.5)))'
 ```
 
+### Matlab
+
+Matlab is a high-level programming language and interactive computing environment.
+
+Matlab is under license, so you need to have a license to use it. 
+
+```matlab
+n = 10;
+k = 8;
+p = 0.5;
+
+% Calculate the probability of the observed outcome
+prob_k = binopdf(k, n, p);
+
+% Find all outcomes with probability <= prob_k (two-sided)
+all_outcomes = 0:n;
+all_probs = binopdf(all_outcomes, n, p);
+p_value = sum(all_probs(all_probs <= prob_k + eps));
+
+disp(['p-value = ', num2str(p_value)]);
+```
+
+The Docker friendly one liner:
+
+```powershell
+docker run --rm matlab Rscript -e "n<-10; k<-8; res<-binom.test(k,n,p=0.5,alternative='two.sided'); cat(sprintf('n=%d k=%d p-value=%g\n',n,k,res`$p.value))"
+```
+
 ## Further Reading
 
 ### Binomial Tests
@@ -555,5 +583,3 @@ ${tex`K\sim \mathrm{Binomial}(n,0.5)`}
 The ${tex`p`}-value is:
 
 > ${tex`\mathrm{p-value}=P(|K-n/2|\geq |k-n/2|\mid H_0)`}
-
-
