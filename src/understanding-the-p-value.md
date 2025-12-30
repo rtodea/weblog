@@ -689,6 +689,16 @@ This is the two-tailed ${tex`p`}-value.
 
 It is ${tex`34.4\%`}, which is bigger than ${tex`5\%`}, so we fail to reject ${tex`H_0`}.
 
+Here is what that number tells us: 
+If you had a perfectly fair coin and repeated this ${tex`10`}-toss experiment many times,
+you would see a result this extreme (or more extreme) about **${tex`34.4`}% of the time** just by pure luck.
+
+In statistics, we need a standard to decide if an event is "rare enough" to reject our assumption that the coin is fair.
+This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and it is commonly set at **${tex`0.05`}** (${tex`5`}%).
+
+* If the ${tex`p`}-value is **less than  ${tex`\alpha`}**, the event is so rare that we reject the **Null Hypothesis** (we say the coin is rigged).
+* If the ${tex`p`}-value is **greater than ${tex`\alpha`}**, the event could easily happen by chance, so we keep the **Null Hypothesis** (we assume the coin is fair).
+
 ### The one-tailed ${tex`p`}-value
 
 The one-tailed ${tex`p`}-value is the probability of getting a result as extreme as or more extreme than the observed result, in one direction only.
@@ -696,7 +706,6 @@ The one-tailed ${tex`p`}-value is the probability of getting a result as extreme
 We assume the coin is rigged towards **Heads**.
 
 > ${tex`\Pr(\text{at least 7 Heads}) = 176 \times (0.5)^{10} = 0.0176`}
-
 
 ### Generic Formula for Two-Tailed ${tex`p`}-Value
 
@@ -762,19 +771,7 @@ Then for the other tail:
 
 And in the end we add them up:
 
-> ${tex`\Pr(\text{at most 3 Heads}) + \Pr(\text{at least 7 Heads}) = \frac{176}{1024} + \frac{176}{1024} = 0.3438`}
-
-Here is what that number tells us: 
-If you had a perfectly fair coin and repeated this ${tex`10`}-toss experiment many times,
-you would see a result this extreme (or more extreme) about **${tex`34.4`}% of the time** just by pure luck.
-
-In statistics, we need a standard to decide if an event is "rare enough" to reject our assumption that the coin is fair.
-This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and it is commonly set at **${tex`0.05`}** (${tex`5`}%).
-
-* If the ${tex`p`}-value is **less than  ${tex`\alpha`}**, the event is so rare that we reject the **Null Hypothesis** (we say the coin is rigged).
-* If the ${tex`p`}-value is **greater than ${tex`\alpha`}**, the event could easily happen by chance, so we keep the **Null Hypothesis** (we assume the coin is fair).
-
-
+> ${tex`\Pr(\text{at most 3 Heads}) + \Pr(\text{at least 7 Heads}) = \frac{176}{1024} + \frac{176}{1024} = \frac{352}{1024} \approx 0.3438`}
 
 ## Simulating the Coin Toss Experiment in Different Programming Languages
 
