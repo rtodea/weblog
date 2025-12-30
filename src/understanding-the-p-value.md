@@ -634,16 +634,34 @@ Back to the math.
 
 > We need to count how many different "shuffles" or ways there are to get ${tex`7`} **Heads** out of ${tex`10`}.
 
-Since we have ${tex`10`} tosses and want to choose which ${tex`7`} of them are Heads, we need to calculate ${tex`\binom{10}{7}`}.
-The formula is: 
+Since we have ${tex`10`} tosses and want to choose which ${tex`7`} of them are **Heads** (and the rest will be **Tails**), we need to calculate the unique arrangements of coins.
+This is called a combination: it's an arrangement where the order doesn't matter. 
+The formula is called the "binomial coefficient" (for some historical reasons we won't go into here).
+It is also known as combinations or choices: 
 
 > ${tex`C_n^k=\binom{n}{k} = \frac{n!}{k!(n-k)!}`}
 
-We calculate the number of combinations for ${tex`8`}, ${tex`9`}, and ${tex`10`} Heads, i.e.:
+We read it as "how many ways can we choose ${tex`k`} objects out of ${tex`n`}" objects.
 
-1. ${tex`\binom{10}{8}`}
-2. ${tex`\binom{10}{9}`}
-3. ${tex`\binom{10}{10}`}
+So the final formula is:
+
+> ${tex`\Pr(\text{7 Heads}) = \binom{10}{7} \times \left(\frac{1}{2}\right)^{10}`}
+
+We now move one for the other cases:
+
+1. 8 Heads and 2 Tails
+2. 9 Heads and 1 Tail
+3. 10 Heads and 0 Tails
+
+We observe that the second part of the formula is the same for all cases: 
+
+> ${tex`{0.5}^{8} \cdot {0.5}^{2} = {0.5}^{9} \cdot {0.5}^{1} = {0.5}^{10} \cdot {0.5}^{0} = {0.5}^{10}`}
+
+The right side is different
+
+1. the number of combinations of ${tex`8`} out of ${tex`10`}, ${tex`\binom{10}{8} = 45`}
+2. the number of combinations of ${tex`9`} out of ${tex`10`}, ${tex`\binom{10}{9} = 10`}
+3. the number of combinations of ${tex`10`} out of ${tex`10`}, ${tex`\binom{10}{10} = 1`}
 
 So, let's sum up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the _high side_:
 
@@ -651,6 +669,10 @@ So, let's sum up all the ways to get a result **at least as extreme as ${tex`7`}
 * **${tex`8`} Heads:** ${tex`45`} ways
 * **${tex`9`} Heads:** ${tex`10`} ways
 * **${tex`10`} Heads:** ${tex`1`} way
+
+
+
+## 🚧 TODO: Review the math from this point on ...
 
 If you add those together (${tex`120 + 45 + 10 + 1`}), you get **${tex`176`}** ways for the *high side* only. 
 
