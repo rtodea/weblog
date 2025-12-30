@@ -647,49 +647,108 @@ So the final formula is:
 
 > ${tex`\Pr(\text{7 Heads}) = \binom{10}{7} \times \left(\frac{1}{2}\right)^{10}`}
 
-We now move one for the other cases:
+Then we want to consider the other extreme cases:
 
-1. 8 Heads and 2 Tails
-2. 9 Heads and 1 Tail
-3. 10 Heads and 0 Tails
+1. 8 Heads and 2 Tails, i.e. ${tex`\Pr(\text{8 Heads})`}
+2. 9 Heads and 1 Tail, i.e. ${tex`\Pr(\text{9 Heads})`}
+3. 10 Heads and 0 Tails, i.e. ${tex`\Pr(\text{10 Heads})`}
 
 We observe that the second part of the formula is the same for all cases: 
 
 > ${tex`{0.5}^{8} \cdot {0.5}^{2} = {0.5}^{9} \cdot {0.5}^{1} = {0.5}^{10} \cdot {0.5}^{0} = {0.5}^{10}`}
 
-The right side is different
+> ${tex`\Pr(\text{8 Heads}) = \square \times {0.5}^{10}`}
+
+> ${tex`\Pr(\text{9 Heads}) = \square \times {0.5}^{10}`}
+
+> ${tex`\Pr(\text{10 Heads}) = \square \times {0.5}^{10}`}
+
+The first part of the formula is different:
 
 1. the number of combinations of ${tex`8`} out of ${tex`10`}, ${tex`\binom{10}{8} = 45`}
 2. the number of combinations of ${tex`9`} out of ${tex`10`}, ${tex`\binom{10}{9} = 10`}
 3. the number of combinations of ${tex`10`} out of ${tex`10`}, ${tex`\binom{10}{10} = 1`}
 
-So, let's sum up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the _high side_:
+So let's sum up all the ways to get a result **at least as extreme as ${tex`7`} Heads** on the _high side_:
 
-* **${tex`7`} Heads:** ${tex`120`} ways
-* **${tex`8`} Heads:** ${tex`45`} ways
-* **${tex`9`} Heads:** ${tex`10`} ways
-* **${tex`10`} Heads:** ${tex`1`} way
+> ${tex`\Pr(\text{at least 7 Heads}) = \\ \Pr(\text{7 Heads}) + \Pr(\text{8 Heads}) + \Pr(\text{9 Heads}) + \Pr(\text{10 Heads})`} 
+
+> ${tex`= \binom{10}{7} \times (0.5)^{10} + \binom{10}{8} \times (0.5)^{10} + \binom{10}{9} \times (0.5)^{10} + \binom{10}{10} \times (0.5)^{10}`}
+
+> ${tex`= (120 + 45 + 10 + 1) \times (0.5)^{10} = 176 \times (0.5)^{10}`}
+
+> ${tex`\Pr(\text{at least 7 Heads}) = 176 \times (0.5)^{10}`}
+
+Since it is a symmetric two-tailed test, the ways for the _low side_ are the same. 
+
+> ${tex`\Pr(\text{at most 3 Heads}) = \Pr(\text{at least 7 Heads})`}
+
+> ${tex`\Pr(\text{at most 3 Heads}) + \Pr(\text{at least 7 Heads}) = 2 \times 176 \times (0.5)^{10} = 0.34375`}
+
+This is the two-tailed ${tex`p`}-value.
+
+It is ${tex`34.4\%`}, which is bigger than ${tex`5\%`}, so we fail to reject ${tex`H_0`}.
+
+### The one-tailed ${tex`p`}-value
+
+The one-tailed ${tex`p`}-value is the probability of getting a result as extreme as or more extreme than the observed result, in one direction only.
+
+We assume the coin is rigged towards **Heads**.
+
+> ${tex`\Pr(\text{at least 7 Heads}) = 176 \times (0.5)^{10} = 0.0176`}
 
 
+### Generic Formula for Two-Tailed ${tex`p`}-Value
 
-## 🚧 TODO: Review the math from this point on ...
+Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the formula for the two-tailed ${tex`p`}-value is:
 
-If you add those together (${tex`120 + 45 + 10 + 1`}), you get **${tex`176`}** ways for the *high side* only. 
+```tex
+{p}\text{-value} = 2 \times \sum_{i=k}^{n} \binom{n}{i} 0.5^n
+```
 
-Since it is a symmetric two-tailed test, we also have **${tex`176`}** ways for the *low side*. 
+This literally translates to: 
 
-Adding them together (${tex`176 + 176`}), we get **${tex`352`}** total ways to see a result as extreme as ours.
+> Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
 
-To turn this count into a probability, we need to divide it by the **total number of possible outcomes** for ${tex`10`} coin tosses.
+### Another Approach for Doing the Math
 
-> If each toss has ${tex`2`} possibilities (Heads or Tails), how many total combinations are there for ${tex`10`} tosses?
+As some of you have noticed, the problem can also be reduced to:
 
-Since there are ${tex`2`} possibilities for each of the ${tex`10`} tosses, we calculate ${tex`2^{10}`}, which is ${tex`1024`}. 
+> ${tex`\Pr(\text{at least 7 Heads}) = \frac{\text{number of ways to get at least 7 Heads}}{\text{total number of possible outcomes}}`}
 
-So, here is the situation:
+The **number of ways to get at least 7 Heads** are the sum of the combinations of ${tex`7`}, ${tex`8`}, ${tex`9`}, and ${tex`10`}, i.e. ${tex`\binom{10}{7} + \binom{10}{8} + \binom{10}{9} + \binom{10}{10}`}.
 
-* **Total possible outcomes:** ${tex`1024`}
-* **Outcomes as extreme as ours (or more):** ${tex`352`} (we calculated this by adding up the ways for both tails).
+The **total number of possible outcomes** for ${tex`10`} relies on counting how many strings of this types there are:
+
+> `HHHHHHHHHH`
+>
+> `HHHHHHHHHT`
+>
+> `HHHHHHHHTT`
+>
+> ...
+>
+> `TTTTTTTTTT`
+
+This is the same as binary numbers from ${tex`0`} to ${tex`1023`}.
+If we replace `H` with `0` and `T` with `1`:
+
+> `0000000000`
+>
+> `0000000001`
+>
+> `0000000010`
+>
+> ...
+>
+> `1111111111`
+
+This is the same as ${tex`2^{10}`}, i.e. ${tex`1024`}. 
+
+Therefore we have all the variables for the formula:
+
+1. **Outcomes as extreme as ours (or more):** ${tex`352`} (we calculated this by adding up the ways for both tails).
+2. **Total possible outcomes:** ${tex`1024`}
 
 To find the **${tex`p`}-value**, we just divide the number of specific outcomes by the total number of possible outcomes.
 
@@ -705,17 +764,7 @@ This standard is called the **Significance Level** (symbol: ${tex`\alpha`}), and
 * If the ${tex`p`}-value is **less than  ${tex`\alpha`}**, the event is so rare that we reject the **Null Hypothesis** (we say the coin is rigged).
 * If the ${tex`p`}-value is **greater than ${tex`\alpha`}**, the event could easily happen by chance, so we keep the **Null Hypothesis** (we assume the coin is fair).
 
-### Generic Formula for Two-Tailed ${tex`p`}-Value
 
-Assuming we observed more heads than average (so ${tex`k > \frac{n}{2}`}), the formula for the two-tailed ${tex`p`}-value is:
-
-```tex
-{p}\text{-value} = 2 \times \sum_{i=k}^{n} \binom{n}{i} 0.5^n
-```
-
-This literally translates to: 
-
-> Calculate the probability for ${tex`i`} heads, where ${tex`i`} starts at your result ${tex`k`} and goes up to ${tex`n`}. Add them all up. Then double it.
 
 ## Simulating the Coin Toss Experiment in Different Programming Languages
 
