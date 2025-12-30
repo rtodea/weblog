@@ -752,7 +752,17 @@ Therefore we have all the variables for the formula:
 
 To find the **${tex`p`}-value**, we just divide the number of specific outcomes by the total number of possible outcomes.
 
-${tex`\frac{352}{1024} \approx 0.3438`}.
+> ${tex`\Pr(\text{at least 7 Heads}) = \frac{\text{number of ways to get at least 7 Heads}}{\text{total number of possible outcomes}}`}
+
+> ${tex`\Pr(\text{at least 7 Heads}) = \frac{176}{1024} \approx 0.1719`}
+
+Then for the other tail:
+
+> ${tex`\Pr(\text{at most 3 Heads}) = \Pr(\text{at least 7 Heads}) = \frac{176}{1024} \approx 0.1719`}
+
+And in the end we add them up:
+
+> ${tex`\Pr(\text{at most 3 Heads}) + \Pr(\text{at least 7 Heads}) = \frac{176}{1024} + \frac{176}{1024} = 0.3438`}
 
 Here is what that number tells us: 
 If you had a perfectly fair coin and repeated this ${tex`10`}-toss experiment many times,
