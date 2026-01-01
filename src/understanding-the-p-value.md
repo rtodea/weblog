@@ -23,7 +23,9 @@ If it is fair, each side has an equal probability of appearing
 
 > ${tex`\Pr(\text{Heads}) = \Pr(\text{Tails}) = \frac{\text{Number of favorable outcomes}}{\text{Number of possible outcomes}} = \frac{1}{2} = 0.5`}
 
-We can simulate tossing this coin ${tex`n`} times.
+### "Dropping Coins" Simulation
+
+We replace tossing a coin ${tex`n`} times with a computer simulation of dropping ${tex`n`} coins.
 
 ```js
 const rollsInput = Inputs.range([10, 1000], {value: 100, step: 10, label: "Number of Tosses (n)"});
@@ -215,6 +217,8 @@ marks: [
   Plot.ruleY([rolls / 2], {stroke: "red", strokeDasharray: "4", strokeWidth: 2, title: "Expected (Fair)"})]})
 ```
 
+### Expected Count
+
 The red line shows the expected count for a perfectly fair coin: 
 
 > ${tex`n \cdot \Pr(\text{Heads}) = n \cdot \frac{1}{2} = \frac{n}{2}`}
@@ -222,6 +226,244 @@ The red line shows the expected count for a perfectly fair coin:
 As you increase ${tex`n`}, the actual counts should cluster more closely around this line relative to the total size.
 
 ## Is the Coin Rigged?
+
+Let's assume we have three coins, A, B, and C.
+
+### "Coin A" Simulation
+
+```js
+const THREE_SIM = await import("https://esm.sh/three@0.160.0");
+
+const simGold = "#ffd700";
+const simSilver = "#888888";
+
+function createSimIcon(text, bgColor, textColor) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128; canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.fillStyle = textColor;
+  ctx.font = "bold 80px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 64, 64);
+  const texture = new THREE_SIM.CanvasTexture(canvas);
+  texture.colorSpace = THREE_SIM.SRGBColorSpace;
+  return texture;
+}
+
+const headTex = createSimIcon("H", simGold, simSilver);
+const tailTex = createSimIcon("T", simSilver, simGold);
+const edgeMatSetup = new THREE_SIM.MeshStandardMaterial({color: 0xb0b0b0, metalness: 0.8, roughness: 0.2});
+const headMatSetup = new THREE_SIM.MeshStandardMaterial({map: headTex, metalness: 0.7, roughness: 0.3});
+const tailMatSetup = new THREE_SIM.MeshStandardMaterial({map: tailTex, metalness: 0.6, roughness: 0.4});
+const simCoinGeo = new THREE_SIM.CylinderGeometry(1, 1, 0.2, 32);
+
+function runCoinSim(container, data, invalidation) {
+  const width = container.clientWidth || 640;
+  const height = 250;
+  
+  const scene = new THREE_SIM.Scene();
+  const camera = new THREE_SIM.PerspectiveCamera(45, width/height, 0.1, 1000);
+  const renderer = new THREE_SIM.WebGLRenderer({antialias: true, alpha: true});
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  const light = new THREE_SIM.DirectionalLight(0xffffff, 1);
+  light.position.set(5, 10, 7.5);
+  scene.add(light);
+  scene.add(new THREE_SIM.AmbientLight(0xffffff, 0.5));
+
+  const coins = [];
+  const spacing = 2.5;
+
+  data.forEach((face, i) => {
+    // Materials: [side, top, bottom] -> [edge, head, tail]
+    // Note: CylinderGeometry faces are Side, Top, Bottom. 
+    // We map: 0:Edge, 1:Top(Head), 2:Bottom(Tail)
+    const coin = new THREE_SIM.Mesh(simCoinGeo, [edgeMatSetup, headMatSetup, tailMatSetup]);
+    
+    const x = i * spacing;
+    coin.position.set(x, 15, 0); 
+    coin.visible = false;
+    
+    // If Head: Top up (RotX=0). If Tail: Bottom up (RotX=PI)
+    const targetRotX = face === "Heads" ? 0 : Math.PI;
+    
+    coins.push({
+      mesh: coin,
+      targetY: 0.1,
+      finalX: x,
+      targetRotX: targetRotX,
+      state: 'waiting',  // waiting, falling, landed
+      rotVel: {
+         x: Math.random() * 0.2,
+         z: Math.random() * 0.2
+      }
+    });
+    scene.add(coin);
+  });
+
+  camera.position.set(0, 5, 12);
+  camera.lookAt(0, 0, 0);
+
+  let activeIndex = 0;
+  let isRunning = true;
+  let lastTime = 0;
+  let nextDrop = 0;
+
+  function animate(time) {
+    if (!isRunning) return;
+    
+    // Drop logic
+    if (activeIndex < coins.length && time > nextDrop) {
+       coins[activeIndex].state = 'falling';
+       coins[activeIndex].mesh.visible = true;
+       activeIndex++;
+       nextDrop = time + 300; // Drop every 300ms
+    }
+
+    // Update particles
+    let moving = false;
+    coins.forEach(c => {
+       if (c.state === 'falling') {
+         moving = true;
+         c.mesh.position.y -= 0.5;
+         c.mesh.rotation.x += c.rotVel.x;
+         c.mesh.rotation.z += c.rotVel.z;
+         
+         if (c.mesh.position.y <= c.targetY) {
+           c.mesh.position.y = c.targetY;
+           c.state = 'landed';
+           c.mesh.rotation.set(c.targetRotX, 0, 0);
+         }
+       }
+    });
+
+    // Camera follow
+    // Follow the coin that is currently falling or just landed
+    const targetIndex = Math.max(0, activeIndex - 1);
+    const targetX = targetIndex * spacing;
+    
+    // Smooth pan
+    const idealX = targetX;
+    camera.position.x += (idealX - camera.position.x) * 0.05;
+    
+    // Ensure we are looking at the line
+    camera.lookAt(camera.position.x, 0, 0);
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  invalidation.then(() => {
+    isRunning = false;
+    renderer.dispose();
+    scene.clear();
+  });
+}
+```
+
+```js
+const coinA_input = Inputs.range([1, 100], {value: 10, step: 1, label: "Tosses (Coin A)"});
+const coinA_n = Generators.input(coinA_input);
+view(coinA_input);
+```
+
+```js
+const dataA = Array.from({length: coinA_n}, () => Math.random() < 0.2 ? "Heads" : "Tails"); // Rigged Tails
+const containerA = html`<div style="width: 100%; height: 250px; background: var(--theme-background-alt); border-radius: 8px; overflow: hidden;"></div>`;
+display(containerA);
+runCoinSim(containerA, dataA, invalidation);
+```
+
+Here is the summary of the simulation:
+
+```js
+const headsA = dataA.filter(d => d === "Heads").length;
+const tailsA = dataA.filter(d => d === "Tails").length;
+const flatCountsA = [{face: "Heads", count: headsA}, {face: "Tails", count: tailsA}];
+
+display(Plot.plot({
+  y: {grid: true, label: "Count"},
+  x: {domain: ["Heads", "Tails"], label: "Outcome"},
+  marks: [
+    Plot.barY(flatCountsA, {x: "face", y: "count", fill: "steelblue"}),
+    Plot.ruleY([coinA_n / 2], {stroke: "red", strokeDasharray: "4", strokeWidth: 2, title: "Expected (Fair)"})
+  ]
+}));
+```
+
+### "Coin B" Simulation
+
+```js
+const coinB_input = Inputs.range([1, 100], {value: 10, step: 1, label: "Tosses (Coin B)"});
+const coinB_n = Generators.input(coinB_input);
+view(coinB_input);
+```
+
+```js
+const dataB = Array.from({length: coinB_n}, () => Math.random() < 0.5 ? "Heads" : "Tails"); // Fair
+const containerB = html`<div style="width: 100%; height: 250px; background: var(--theme-background-alt); border-radius: 8px; overflow: hidden;"></div>`;
+display(containerB);
+runCoinSim(containerB, dataB, invalidation);
+```
+
+Here is the summary of the simulation:
+
+```js
+const headsB = dataB.filter(d => d === "Heads").length;
+const tailsB = dataB.filter(d => d === "Tails").length;
+const flatCountsB = [{face: "Heads", count: headsB}, {face: "Tails", count: tailsB}];
+
+display(Plot.plot({
+  y: {grid: true, label: "Count"},
+  x: {domain: ["Heads", "Tails"], label: "Outcome"},
+  marks: [
+    Plot.barY(flatCountsB, {x: "face", y: "count", fill: "steelblue"}),
+    Plot.ruleY([coinB_n / 2], {stroke: "red", strokeDasharray: "4", strokeWidth: 2, title: "Expected (Fair)"})
+  ]
+}));
+```
+
+### "Coin C" Simulation
+
+```js
+const coinC_input = Inputs.range([1, 100], {value: 10, step: 1, label: "Tosses (Coin C)"});
+const coinC_n = Generators.input(coinC_input);
+view(coinC_input);
+```
+
+```js
+const dataC = Array.from({length: coinC_n}, () => Math.random() < 0.8 ? "Heads" : "Tails"); // Rigged Heads
+const containerC = html`<div style="width: 100%; height: 250px; background: var(--theme-background-alt); border-radius: 8px; overflow: hidden;"></div>`;
+display(containerC);
+runCoinSim(containerC, dataC, invalidation);
+```
+
+Here is the summary of the simulation:
+
+```js
+const headsC = dataC.filter(d => d === "Heads").length;
+const tailsC = dataC.filter(d => d === "Tails").length;
+const flatCountsC = [{face: "Heads", count: headsC}, {face: "Tails", count: tailsC}];
+
+display(Plot.plot({
+  y: {grid: true, label: "Count"},
+  x: {domain: ["Heads", "Tails"], label: "Outcome"},
+  marks: [
+    Plot.barY(flatCountsC, {x: "face", y: "count", fill: "steelblue"}),
+    Plot.ruleY([coinC_n / 2], {stroke: "red", strokeDasharray: "4", strokeWidth: 2, title: "Expected (Fair)"})
+  ]
+}));
+```
+
+### Which Coin is Rigged?
+
+If you would guess which coin is rigged, which one would it be?
 
 Now, suppose we suspect the coin is **rigged**.
 This is where we could talk about two possible biases:
@@ -809,34 +1051,6 @@ In a Docker friendly one liner:
 
 ```powershell
 docker run --rm julia:1.9.3 julia -e 'import Pkg; Pkg.activate(; temp=true); Pkg.add(\"HypothesisTests\"); using HypothesisTests; println(pvalue(BinomialTest(8, 10, 0.5)))'
-```
-
-### Matlab
-
-Matlab is a high-level programming language and interactive computing environment.
-
-Matlab is under license, so you need to have a license to use it. 
-
-```matlab
-n = 10;
-k = 8;
-p = 0.5;
-
-% Calculate the probability of the observed outcome
-prob_k = binopdf(k, n, p);
-
-% Find all outcomes with probability <= prob_k (two-sided)
-all_outcomes = 0:n;
-all_probs = binopdf(all_outcomes, n, p);
-p_value = sum(all_probs(all_probs <= prob_k + eps));
-
-disp(['p-value = ', num2str(p_value)]);
-```
-
-The Docker friendly one liner:
-
-```powershell
-docker run --rm matlab Rscript -e "n<-10; k<-8; res<-binom.test(k,n,p=0.5,alternative='two.sided'); cat(sprintf('n=%d k=%d p-value=%g\n',n,k,res`$p.value))"
 ```
 
 ### Python
