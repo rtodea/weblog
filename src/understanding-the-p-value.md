@@ -2,6 +2,11 @@
 title: Understanding the p-Value
 ---
 
+```js
+import { runGridSim, runCoinSim, runShuffleSim } from "./understanding-the-p-value/js/coin-simulations.js";
+import { combinations, binomialPMF, findCriticalValue, calculatePValue } from "./understanding-the-p-value/js/p-value-utils.js";
+```
+
 # Understanding the ${tex`p`}-Value
 
 **Why do we care about ${tex`p`}-values?**
@@ -42,164 +47,10 @@ const counts = d3.rollup(data, v => v.length, d => d);
 const flatCounts = Array.from(counts, ([face, count]) => ({face, count}));
 ```
 
-A small simulation of tossing ${tex`n`} coins.
-
 ```js
-const THREE = await import("https://esm.sh/three@0.160.0");
-
 const container = html`<div style="width: 100%; height: 300px; background: var(--theme-background-alt); border-radius: 8px; overflow: hidden; position: relative;"></div>`;
 display(container);
-
-const width = container.clientWidth || 640;
-const height = 300;
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(width, height);
-renderer.setPixelRatio(window.devicePixelRatio);
-container.appendChild(renderer.domElement);
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 10, 7.5);
-scene.add(directionalLight);
-
-// Adaptive camera position based on number of tosses
-const colsAdjust = Math.ceil(Math.sqrt(rolls));
-const adaptiveZ = Math.max(15, colsAdjust * 2.5);
-camera.position.z = adaptiveZ;
-camera.position.y = adaptiveZ * 0.7;
-camera.lookAt(0, 0, 0);
-
-const goldColor = "#ffd700";
-const silverColor = "#888888";
-const coinGeometry = new THREE.CylinderGeometry(1, 1, 0.2, 32);
-
-function createCoinFace(text, bgColor, textColor) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 128;
-  canvas.height = 128;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, 128, 128);
-  ctx.fillStyle = textColor;
-  ctx.font = "bold 80px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, 64, 64);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-const headsTexture = createCoinFace("H", goldColor, silverColor);
-const tailsTexture = createCoinFace("T", silverColor, goldColor);
-
-const goldMaterial = new THREE.MeshStandardMaterial({
-  map: headsTexture,
-  metalness: 0.7,
-  roughness: 0.3
-});
-const silverMaterial = new THREE.MeshStandardMaterial({
-  map: tailsTexture,
-  metalness: 0.6,
-  roughness: 0.4
-});
-const edgeMaterial = new THREE.MeshStandardMaterial({
-  color: 0xb0b0b0,
-  metalness: 0.8,
-  roughness: 0.2
-});
-
-const coinMaterials = [edgeMaterial, goldMaterial, silverMaterial];
-
-
-const coins = [];
-const maxAnimate = rolls; // Animate all coins as requested
-
-// Grid parameters for non-overlapping landing spots
-const spacing = 2.5;
-
-const cols = Math.ceil(Math.sqrt(maxAnimate));
-const offset = ((cols - 1) * spacing) / 2;
-
-for (let i = 0; i < maxAnimate; i++) {
-  const isHeads = data[i] === "Heads";
-  const coin = new THREE.Mesh(coinGeometry, coinMaterials);
-  
-  // Grid position (row, col) with jitter
-  const gridX = (i % cols) * spacing - offset;
-  const gridZ = Math.floor(i / cols) * spacing - offset;
-  const jitterX = (Math.random() - 0.5) * 1;
-  const jitterZ = (Math.random() - 0.5) * 1;
-  
-  const targetX = gridX + jitterX;
-  const targetZ = gridZ + jitterZ;
-
-  // Start positions (high above target)
-  coin.position.set(targetX, 15 + Math.random() * 20, targetZ);
-
-  coin.rotation.set(
-    Math.random() * Math.PI,
-    Math.random() * Math.PI,
-    Math.random() * Math.PI
-  );
-
-  const velocity = -0.1 - Math.random() * 0.1;
-  const rotationSpeed = {
-    x: (Math.random() - 0.5) * 0.2,
-    y: (Math.random() - 0.5) * 0.2,
-    z: (Math.random() - 0.5) * 0.2
-  };
-  
-  scene.add(coin);
-  coins.push({
-    mesh: coin,
-    vel: velocity,
-    rot: rotationSpeed,
-    landingY: 0.1, // Half of cylinder height (0.2)
-    landed: false,
-    targetRotX: isHeads ? 0 : Math.PI,
-    targetRotZ: 0 // Keep H/T upright
-  });
-}
-
-let frame = 0;
-function animate() {
-  frame++;
-  let allLanded = true;
-  coins.forEach(c => {
-    if (!c.landed) {
-      c.mesh.position.y += c.vel;
-      c.mesh.rotation.x += c.rot.x;
-      c.mesh.rotation.y += c.rot.y;
-      c.mesh.rotation.z += c.rot.z;
-      
-      if (c.mesh.position.y <= c.landingY) {
-        c.mesh.position.y = c.landingY;
-        c.mesh.rotation.set(c.targetRotX, 0, c.targetRotZ); // Flat and upright
-        c.landed = true;
-      } else {
-        allLanded = false;
-      }
-    }
-  });
-
-  renderer.render(scene, camera);
-  if (!allLanded && frame < 1000) {
-    requestAnimationFrame(animate);
-  }
-}
-
-animate();
-
-invalidation.then(() => {
-  renderer.dispose();
-  scene.clear();
-});
-
+runGridSim(container, data, invalidation);
 ```
 
 Here are the results of our simulation:
@@ -230,142 +81,6 @@ As you increase ${tex`n`}, the actual counts should cluster more closely around 
 Let's assume we have three coins, A, B, and C.
 
 ### "Coin A" Simulation
-
-```js
-const THREE_SIM = await import("https://esm.sh/three@0.160.0");
-
-const simGold = "#ffd700";
-const simSilver = "#888888";
-
-function createSimIcon(text, bgColor, textColor) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 128; canvas.height = 128;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, 128, 128);
-  ctx.fillStyle = textColor;
-  ctx.font = "bold 80px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, 64, 64);
-  const texture = new THREE_SIM.CanvasTexture(canvas);
-  texture.colorSpace = THREE_SIM.SRGBColorSpace;
-  return texture;
-}
-
-const headTex = createSimIcon("H", simGold, simSilver);
-const tailTex = createSimIcon("T", simSilver, simGold);
-const edgeMatSetup = new THREE_SIM.MeshStandardMaterial({color: 0xb0b0b0, metalness: 0.8, roughness: 0.2});
-const headMatSetup = new THREE_SIM.MeshStandardMaterial({map: headTex, metalness: 0.7, roughness: 0.3});
-const tailMatSetup = new THREE_SIM.MeshStandardMaterial({map: tailTex, metalness: 0.6, roughness: 0.4});
-const simCoinGeo = new THREE_SIM.CylinderGeometry(1, 1, 0.2, 32);
-
-function runCoinSim(container, data, invalidation) {
-  const width = container.clientWidth || 640;
-  const height = 250;
-  
-  const scene = new THREE_SIM.Scene();
-  const camera = new THREE_SIM.PerspectiveCamera(45, width/height, 0.1, 1000);
-  const renderer = new THREE_SIM.WebGLRenderer({antialias: true, alpha: true});
-  renderer.setSize(width, height);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  container.appendChild(renderer.domElement);
-
-  const light = new THREE_SIM.DirectionalLight(0xffffff, 1);
-  light.position.set(5, 10, 7.5);
-  scene.add(light);
-  scene.add(new THREE_SIM.AmbientLight(0xffffff, 0.5));
-
-  const coins = [];
-  const spacing = 2.5;
-
-  data.forEach((face, i) => {
-    // Materials: [side, top, bottom] -> [edge, head, tail]
-    // Note: CylinderGeometry faces are Side, Top, Bottom. 
-    // We map: 0:Edge, 1:Top(Head), 2:Bottom(Tail)
-    const coin = new THREE_SIM.Mesh(simCoinGeo, [edgeMatSetup, headMatSetup, tailMatSetup]);
-    
-    const x = i * spacing;
-    coin.position.set(x, 15, 0); 
-    coin.visible = false;
-    
-    // If Head: Top up (RotX=0). If Tail: Bottom up (RotX=PI)
-    const targetRotX = face === "Heads" ? 0 : Math.PI;
-    
-    coins.push({
-      mesh: coin,
-      targetY: 0.1,
-      finalX: x,
-      targetRotX: targetRotX,
-      state: 'waiting',  // waiting, falling, landed
-      rotVel: {
-         x: Math.random() * 0.2,
-         z: Math.random() * 0.2
-      }
-    });
-    scene.add(coin);
-  });
-
-  camera.position.set(0, 5, 12);
-  camera.lookAt(0, 0, 0);
-
-  let activeIndex = 0;
-  let isRunning = true;
-  let lastTime = 0;
-  let nextDrop = 0;
-
-  function animate(time) {
-    if (!isRunning) return;
-    
-    // Drop logic
-    if (activeIndex < coins.length && time > nextDrop) {
-       coins[activeIndex].state = 'falling';
-       coins[activeIndex].mesh.visible = true;
-       activeIndex++;
-       nextDrop = time + 300; // Drop every 300ms
-    }
-
-    // Update particles
-    let moving = false;
-    coins.forEach(c => {
-       if (c.state === 'falling') {
-         moving = true;
-         c.mesh.position.y -= 0.5;
-         c.mesh.rotation.x += c.rotVel.x;
-         c.mesh.rotation.z += c.rotVel.z;
-         
-         if (c.mesh.position.y <= c.targetY) {
-           c.mesh.position.y = c.targetY;
-           c.state = 'landed';
-           c.mesh.rotation.set(c.targetRotX, 0, 0);
-         }
-       }
-    });
-
-    // Camera follow
-    // Follow the coin that is currently falling or just landed
-    const targetIndex = Math.max(0, activeIndex - 1);
-    const targetX = targetIndex * spacing;
-    
-    // Smooth pan
-    const idealX = targetX;
-    camera.position.x += (idealX - camera.position.x) * 0.05;
-    
-    // Ensure we are looking at the line
-    camera.lookAt(camera.position.x, 0, 0);
-
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  }
-  requestAnimationFrame(animate);
-
-  invalidation.then(() => {
-    isRunning = false;
-    renderer.dispose();
-    scene.clear();
-  });
-}
-```
 
 ```js
 const coinA_input = Inputs.range([1, 100], {value: 10, step: 1, label: "Tosses (Coin A)"});
@@ -512,32 +227,6 @@ const alpha = (100 - confidence) / 100;
 const nCheck = values.n;
 const pFair = 0.5;
 
-// Helper functions (defined locally to ensure visibility)
-function combinations(n, k) {
-  if (k < 0 || k > n) return 0;
-  if (k === 0 || k === n) return 1;
-  if (k > n / 2) k = n - k;
-  let res = 1;
-  for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
-  return res;
-}
-
-function binomialPMF(k, n, p) {
-  return combinations(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
-}
-
-function findCriticalValue(n, p, alpha) {
-  const upperTailAlpha = alpha / 2;
-  let probSum = 0;
-  for (let k = n; k >= 0; k--) {
-    probSum += binomialPMF(k, n, p);
-    if (probSum > upperTailAlpha) {
-      return k + 1;
-    }
-  }
-  return n + 1; // Fallback
-}
-
 const criticalValue = findCriticalValue(nCheck, pFair, alpha);
 ```
 
@@ -584,28 +273,6 @@ view(quickForm);
 ```js
 const n2 = quickValues.nQuick;
 const k2 = quickValues.kQuick;
-
-function calculatePValue(n, k) {
-  if (k < 0 || k > n) return 0;
-  
-  // Calculate probability of being at least as extreme
-  // For p=0.5, the distribution is symmetric around n/2
-  const expected = n / 2;
-  const distance = Math.abs(k - expected);
-  
-  // High side extreme: k >= expected + distance
-  // Low side extreme: k <= expected - distance
-  const kHigh = Math.ceil(expected + distance);
-  
-  let probHigh = 0;
-  for (let i = kHigh; i <= n; i++) {
-    probHigh += binomialPMF(i, n, 0.5);
-  }
-  
-  // Two-tailed p-value is 2 * probHigh (due to symmetry)
-  // Cap at 1.0 (e.g. if k is exactly n/2, probHigh is > 0.5)
-  return Math.min(1, 2 * probHigh);
-}
 
 const pValueResult = calculatePValue(n2, k2);
 ```
@@ -749,127 +416,8 @@ view(shuffleForm);
 
 ```js
 const {heads, tails, shuffles} = shuffleValues;
-
-// Create container
-const height = 180;
-const container = display(html`<div style="height: ${height}px; width: 100%; position: relative; overflow: hidden; background: var(--theme-background-alt); border: 1px solid var(--theme-foreground-faintest); border-radius: 8px;"></div>`);
-
-// Graphics helpers
-const createCoinImg = (text, bg, fg) => {
-  const size = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = size; canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  ctx.beginPath();
-  ctx.arc(size/2, size/2, size/2 - 2, 0, 2*Math.PI);
-  ctx.fillStyle = bg;
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "#b0b0b0";
-  ctx.stroke();
-  ctx.fillStyle = fg;
-  ctx.font = "bold 36px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, size/2, size/2);
-  return canvas.toDataURL();
-};
-const gold = "#ffd700";
-const silver = "#888888";
-const imgH = createCoinImg("H", gold, silver);
-const imgT = createCoinImg("T", silver, gold);
-
-// Setup items
-const coinSize = 40;
-const gap = 10;
-const totalCoins = heads + tails;
-const w = width || container.clientWidth || 600; 
-const totalW = totalCoins * (coinSize + gap) - gap;
-const startX = Math.max(10, (w - totalW) / 2);
-
-let items = [];
-for(let i=0; i<heads; i++) items.push({type: "H", src: imgH});
-for(let i=0; i<tails; i++) items.push({type: "T", src: imgT});
-
-// Render initial DOM
-const els = items.map((item, i) => {
-  const el = document.createElement("img");
-  el.src = item.src;
-  el.style.position = "absolute";
-  el.style.width = coinSize + "px";
-  el.style.height = coinSize + "px";
-  el.style.top = (height - coinSize)/2 + "px";
-  el.style.left = (startX + i * (coinSize + gap)) + "px";
-  container.appendChild(el);
-  return {el, ...item, idx: i, currentLeft: (startX + i * (coinSize + gap))};
-});
-
-// Animation Loop
-(async () => {
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  await sleep(500);
-
-  for(let k=0; k<shuffles; k++) {
-    if(!container.isConnected) break; // Stop if removed
-    
-    // Pick two distinct indices
-    const idx1 = Math.floor(Math.random() * els.length);
-    let idx2 = Math.floor(Math.random() * els.length);
-    while(idx1 === idx2 && els.length > 1) {
-       idx2 = Math.floor(Math.random() * els.length);
-    }
-    
-    if(idx1 !== idx2) {
-      const iMin = Math.min(idx1, idx2);
-      const iMax = Math.max(idx1, idx2);
-      const el1 = els[iMin];
-      const el2 = els[iMax];
-      
-      const startL1 = el1.currentLeft;
-      const startL2 = el2.currentLeft;
-      const dist = startL2 - startL1;
-      
-      const duration = 600;
-      const startTime = performance.now();
-      
-      while(true) {
-        const now = performance.now();
-        let p = (now - startTime) / duration;
-        if(p > 1) p = 1;
-        
-        // Easing (easeInOutQuad)
-        const t = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
-        
-        // Arc motion: el1 goes UP (negative Y), el2 goes DOWN (positive Y)
-        const arcH = 40;
-        const y1 = -Math.sin(t * Math.PI) * arcH;
-        const y2 = Math.sin(t * Math.PI) * arcH;
-        
-        const curL1 = startL1 + dist * t;
-        const curL2 = startL2 - dist * t;
-        
-        el1.el.style.left = curL1 + "px";
-        el1.el.style.transform = `translateY(${y1}px)`;
-        
-        el2.el.style.left = curL2 + "px";
-        el2.el.style.transform = `translateY(${y2}px)`;
-        
-        if(p === 1) break;
-        await new Promise(r => requestAnimationFrame(r));
-      }
-      
-      // Update logical state
-      el1.currentLeft = startL2;
-      el2.currentLeft = startL1;
-      
-      // Swap in array
-      els[iMin] = el2;
-      els[iMax] = el1;
-      
-      await sleep(200);
-    }
-  }
-})();
+const container = display(html`<div style="height: 180px; width: 100%; position: relative; overflow: hidden; background: var(--theme-background-alt); border: 1px solid var(--theme-foreground-faintest); border-radius: 8px;"></div>`);
+runShuffleSim(container, heads, tails, shuffles, width);
 ```
 
 Back to the math.
