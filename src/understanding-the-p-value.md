@@ -2,7 +2,54 @@
 title: Understanding the p-Value
 ---
 
+```js
+// Helper functions for binomial calculations
+function combinations(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  if (k > n / 2) k = n - k;
+  let res = 1;
+  for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
+  return res;
+}
+
+function binomialPMF(k, n, p) {
+  return combinations(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+}
+
+function findCriticalValue(n, p, alpha) {
+  const upperTailAlpha = alpha / 2;
+  let probSum = 0;
+  for (let k = n; k >= 0; k--) {
+    probSum += binomialPMF(k, n, p);
+    if (probSum > upperTailAlpha) {
+      return k + 1;
+    }
+  }
+  return n + 1; // Fallback
+}
+```
+
 # Understanding the ${tex`p`}-Value
+
+```js
+const n_summary_input = Inputs.number([1, 1000], {value: 10, label: "Tosses"});
+const n_summary = Generators.input(n_summary_input);
+```
+
+## Summary --- Rule of Thumb (TLDR)
+
+The **${tex`p`}-value** is the probability of seeing a result as extreme as (or more extreme than) what you observed, assuming the **Null Hypothesis** (the "it's just luck" assumption) is true.
+
+*   **${tex`p \le 0.05`}**: **Statistically Significant**. The result is unlikely to be a fluke.
+*   **${tex`p > 0.05`}**: **Not Significant**. The result could easily be random noise.
+
+**Quick Tipping Point:**
+For ${n_summary_input} tosses, 
+you need at least **${findCriticalValue(n_summary, 0.5, 0.05)}** Heads (or Tails) to be 95% confident the coin is rigged. 
+[Try the advanced calculator below](#tipping-point-calculator).
+
+---
 
 **Why do we care about ${tex`p`}-values?**
 
@@ -511,32 +558,6 @@ const confidence = values.confidence;
 const alpha = (100 - confidence) / 100;
 const nCheck = values.n;
 const pFair = 0.5;
-
-// Helper functions (defined locally to ensure visibility)
-function combinations(n, k) {
-  if (k < 0 || k > n) return 0;
-  if (k === 0 || k === n) return 1;
-  if (k > n / 2) k = n - k;
-  let res = 1;
-  for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
-  return res;
-}
-
-function binomialPMF(k, n, p) {
-  return combinations(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
-}
-
-function findCriticalValue(n, p, alpha) {
-  const upperTailAlpha = alpha / 2;
-  let probSum = 0;
-  for (let k = n; k >= 0; k--) {
-    probSum += binomialPMF(k, n, p);
-    if (probSum > upperTailAlpha) {
-      return k + 1;
-    }
-  }
-  return n + 1; // Fallback
-}
 
 const criticalValue = findCriticalValue(nCheck, pFair, alpha);
 ```
